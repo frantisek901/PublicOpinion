@@ -1,9 +1,9 @@
-;; This is the first model for the high-risk high-gain project with Mike and Ashley
-;; Here we'd like to apply HK/Deffuant model in more than 1D and look how agents adapt in >1D opinion space and whether they form groups.
+;; This is the first model for the high-risk high-gain project with Mike, Ashley and Ashwin
+;; Here we'd like to apply Hegselmann-Krausse model in more than 1D and look how agents adapt in >1D opinion space and whether they form groups.
 ;; MAIN BRANCH: THIS IS OUR THE BEST MODEL SO FAR
 
 ;; Created:  2021-10-21 FranCesko
-;; Edited:   2021-12-29 FranCesko
+;; Edited:   2022-01-17 FranCesko
 ;; Encoding: windows-1250
 ;; NetLogo:  6.2.2
 ;;
@@ -402,8 +402,9 @@ to go
   ;; Finishing condition:
   ;; 1) We reached state, where no turtle changes for RECORD-LENGTH steps, i.e. average of MAIN-RECORD (list of averages of turtles/agents RECORD) is 1 or
   ;; 2) We reached number of steps specified in MAX-TICKS
-  if mean main-Record = 1 or ticks = max-ticks [record-state-of-simulation stop]
-  if (ticks / record-each-n-steps) = floor(ticks / record-each-n-steps) [record-state-of-simulation]
+  if (mean main-Record = 1 or ticks = max-ticks) and record? [record-state-of-simulation]
+  if mean main-Record = 1 or ticks = max-ticks [stop]
+  if (ticks / record-each-n-steps) = floor(ticks / record-each-n-steps) and record? [record-state-of-simulation]
 end
 
 
@@ -629,7 +630,7 @@ N-agents
 N-agents
 10
 1000
-101.0
+1000.0
 1
 1
 NIL
@@ -659,7 +660,7 @@ p-random
 p-random
 0
 0.5
-0.25
+0.05
 0.01
 1
 NIL
@@ -674,7 +675,7 @@ opinions
 opinions
 1
 50
-8.0
+2.0
 1
 1
 NIL
@@ -731,7 +732,7 @@ boundary
 boundary
 0.01
 1
-0.3
+0.15
 0.01
 1
 NIL
@@ -863,7 +864,7 @@ sigma
 sigma
 0
 1
-0.0
+0.07
 0.01
 1
 NIL
@@ -896,7 +897,7 @@ mu
 mu
 0.01
 1
-0.0
+0.08
 0.01
 1
 NIL
@@ -1113,7 +1114,7 @@ CHOOSER
 mode
 mode
 "openly-listen" "vaguely-speak"
-1
+0
 
 CHOOSER
 1172
@@ -1175,7 +1176,7 @@ INPUTBOX
 1424
 174
 file-name-core
-1_101_0.25_50_8_1_0.3_uniform_0.5_constant_vaguely-speak
+1_1000_0.05_50_2_1_0.15_uniform_0.5_function_openly-listen
 1
 0
 String
@@ -1230,7 +1231,7 @@ SWITCH
 239
 record?
 record?
-0
+1
 1
 -1000
 
@@ -1268,7 +1269,7 @@ CHOOSER
 p-speaking-drawn
 p-speaking-drawn
 "constant" "uniform" "function"
-0
+2
 
 PLOT
 1166
@@ -1325,7 +1326,7 @@ SWITCH
 76
 avoid-redundancies?
 avoid-redundancies?
-0
+1
 1
 -1000
 
