@@ -379,7 +379,7 @@ to-report get-satisfaction
   ;; initialization of agent set 'supporters' containing agents whose opinion positions are key for agent's satisfaction
   let supporters nobody
   ;; 1) updating agent uses only visible link neighbors in small-world network
-  let visibles other link-neighbors with [color != white]
+  let visibles link-neighbors with [color != white]
 
   ;; 2) we have different modes for finding supporters:
   ;; 2.1) in mode "I got them!" agent looks inside her boundary (opinion +/- uncertainty),
@@ -398,47 +398,80 @@ to-report get-satisfaction
     ;;       not 'Uncertainty' of calling agent who updates her opinion.
     set supporters visibles with [opinion-distance <= (Uncertainty * sqrt(opinions * 4))]
   ]
-
+  ;print ((1 - (count supporters / count visibles)) < Tolerance)
   ;; Now we can return the True/False value, whether the agent is satisfied and among visible neighbors are enough supporters
-  report (count supporters / count visibles) >= (1 - Tolerance)
+  report ((1 - (count supporters / count visibles)) < Tolerance)
 end
 
 ;; subroutine for leaving the neighborhood and joining a new one -- agent is decided to leave, we just process it here
 to leave-the-neighborhood-join-a-new-one
-  show "I'm not satisfied!"
+  ;show "I'm not satisfied!"
   ;; Firstly, we have to count agents neighbors, to determine how many links agent has to create in the main part of the procedure
-  let nei-size count link-neighbors
+  let old-nei link-neighbors
+  let nei-size count old-nei
 
   ;; Secondly, we cut off all the links
   ask my-links [die]
+  ask links [set hidden? TRUE]
 
   ;; Thirdly, we start with one random agent as a seed of new neighborhood
   let nei-seed one-of other turtles
   create-link-with nei-seed
-  print nei-seed
+  ;print nei-seed
 
   ;; Fourthly, we record neighbors of nei-seed in the list
   let nei-list [[self] of link-neighbors] of nei-seed
+  set nei-list remove self nei-list  ;; Removing 'self' from the list in case it's there.
 
   ;; Fifthly, we do cycle, until we create/join the full neighborhood of 'nei-size'
   while [count link-neighbors < nei-size] [
     ;; Randomly choosing one new neighbor from the list
     let new-nei one-of nei-list
-
+    ;print new-nei
+    ;print nei-list
     ;; Creating a link to new-nei
-   create-link-with new-nei
+    create-link-with new-nei
 
-   ;; Adding all neis of 'new-nei' into the 'nei-list'
-   set nei-list (list nei-list ([[self] of link-neighbors] of new-nei))
+    ;; Adding all neis of 'new-nei' into the 'nei-list'
+    set nei-list sentence nei-list ([[self] of link-neighbors] of new-nei)
+    foreach [self] of link-neighbors [nt -> set nei-list remove nt nei-list]
 
+   ;; Cleaning 'self' and 'link-neighbors' from 'nei-list' -- avoiding creating link with herself or existing neis
+   set nei-list remove self nei-list
   ]
+  ask links [set hidden? TRUE]
 
+  ;print sort nei-list
+  ;print count link-neighbors
+  ;print nei-size
 
+  ;; Lastly, the agent asks whole 'old-nei' to find a new nei instead of him
+    ;; Firstly, we create list of all neigbors of 'link-neighbors'
+    let our-list []  ;; Initialize empty list.
+    (foreach [self] of old-nei [mn -> ask mn [(foreach [self] of link-neighbors [X -> set our-list sentence our-list ([self] of link-neighbors)])]])  ;; Add all neis of all my neis to the list.
+    ;show sort our-list
+    foreach [self] of old-nei [mcn -> set our-list remove mcn our-list]  ;; Removing all current neis from the list.
+    set our-list remove self our-list
+    ;print sort our-list
 
-  print nei-list
-  print count link-neighbors
-  print nei-size
+  if not empty? our-list [  ;; This avoids runtime error: Sometimes agent leaves mutually connected neighborhood, so the 'our-list' might be empty after leaving of leaving agent
 
+    let new-nei one-of our-list
+    ;print new-nei
+
+    ;; Secondly we assign new node 'new-nei' to the whole 'old-nei'
+    ask old-nei [
+    ;; Randomly choosing one new neighbor from the list
+    ;print new-nei
+    ;print nei-list
+      ;; Creating a link to new-nei
+      create-link-with new-nei
+    ;print sort link-neighbors
+    ]
+   ]
+ ask links [set hidden? TRUE]
+
+;print "----------------------------------"
 end
 
 
@@ -664,7 +697,7 @@ N-agents
 N-agents
 10
 1000
-101.0
+30.0
 1
 1
 NIL
@@ -679,7 +712,7 @@ n-neis
 n-neis
 1
 500
-15.0
+10.0
 1
 1
 NIL
@@ -751,7 +784,7 @@ p-speaking-level
 p-speaking-level
 0
 1
-0.5
+1.0
 0.001
 1
 NIL
@@ -766,7 +799,7 @@ boundary
 boundary
 0.01
 1
-0.15
+0.3
 0.01
 1
 NIL
@@ -1210,7 +1243,7 @@ INPUTBOX
 1424
 174
 file-name-core
-10_101_0.05_15_1_1_0.15_uniform_0.5_function_openly-listen
+10_30_0.05_10_1_1_0.3_uniform_1_uniform_openly-listen
 1
 0
 String
@@ -1303,7 +1336,7 @@ CHOOSER
 p-speaking-drawn
 p-speaking-drawn
 "constant" "uniform" "function"
-2
+1
 
 PLOT
 1166
@@ -1387,7 +1420,7 @@ CHOOSER
 tolerance-drawn
 tolerance-drawn
 "constant" "uniform"
-1
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
