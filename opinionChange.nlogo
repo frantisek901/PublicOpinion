@@ -403,9 +403,42 @@ to-report get-satisfaction
   report (count supporters / count visibles) >= (1 - Tolerance)
 end
 
-;; subroutine for leaving the neighborhood and joining a new one
+;; subroutine for leaving the neighborhood and joining a new one -- agent is decided to leave, we just process it here
 to leave-the-neighborhood-join-a-new-one
   show "I'm not satisfied!"
+  ;; Firstly, we have to count agents neighbors, to determine how many links agent has to create in the main part of the procedure
+  let nei-size count link-neighbors
+
+  ;; Secondly, we cut off all the links
+  ask my-links [die]
+
+  ;; Thirdly, we start with one random agent as a seed of new neighborhood
+  let nei-seed one-of other turtles
+  create-link-with nei-seed
+  print nei-seed
+
+  ;; Fourthly, we record neighbors of nei-seed in the list
+  let nei-list [[self] of link-neighbors] of nei-seed
+
+  ;; Fifthly, we do cycle, until we create/join the full neighborhood of 'nei-size'
+  while [count link-neighbors < nei-size] [
+    ;; Randomly choosing one new neighbor from the list
+    let new-nei one-of nei-list
+
+    ;; Creating a link to new-nei
+   create-link-with new-nei
+
+   ;; Adding all neis of 'new-nei' into the 'nei-list'
+   set nei-list (list nei-list ([[self] of link-neighbors] of new-nei))
+
+  ]
+
+
+
+  print nei-list
+  print count link-neighbors
+  print nei-size
+
 end
 
 
