@@ -17,7 +17,7 @@
 ;; IDEA: Employ Schelling principle -- if the agents are unhappy in their neighborhood,
 ;;       the cut off all the links and create new set of links, i.e., join new neighborhood.
 ;;
-;;
+;; Elle: I do cluster detection using igraph:: cluster_walktrap() in R
 
 
 ;; WISHLIST:
@@ -742,7 +742,7 @@ opinions
 opinions
 1
 50
-1.0
+2.0
 1
 1
 NIL
@@ -1045,7 +1045,7 @@ Y-opinion
 Y-opinion
 1
 50
-1.0
+2.0
 1
 1
 NIL
@@ -1243,7 +1243,7 @@ INPUTBOX
 1424
 174
 file-name-core
-10_30_0.05_10_1_1_0.3_uniform_1_uniform_openly-listen
+10_30_0.05_10_2_1_0.3_uniform_1_uniform_openly-listen
 1
 0
 String
