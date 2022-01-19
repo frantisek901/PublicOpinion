@@ -26,7 +26,7 @@ extensions [nw]
 
 turtles-own [Opinion-position P-speaking Speak? Uncertainty Record Last-opinion Pol-bias Initial-opinion Tolerance Satisfied?]
 
-globals [main-Record components positions no-network-change]
+globals [main-Record components positions network-changes]
 
 
 ;; Initialization and setup
@@ -73,7 +73,7 @@ to setup
   ;; Setting the indicator of change for the whole simulation, again as non-stable.
   set main-Record n-values record-length [0]
   ;; Setting control variable of network changes
-  set no-network-change TRUE
+  set network-changes 0
 
   reset-ticks
 
@@ -305,7 +305,7 @@ to go
   avoiding-run-time-errors
 
   ;; Before a round erasing indicator of change
-  set no-network-change TRUE
+  set network-changes 0
 
   ;; True part of GO procedure!
   ask turtles [
@@ -326,8 +326,8 @@ to go
   ;; Finishing condition:
   ;; 1) We reached state, where no turtle changes for RECORD-LENGTH steps, i.e. average of MAIN-RECORD (list of averages of turtles/agents RECORD) is 1 or
   ;; 2) We reached number of steps specified in MAX-TICKS
-  if ((mean main-Record = 1 and no-network-change) or ticks = max-ticks) and record? [record-state-of-simulation]
-  if (mean main-Record = 1 and no-network-change) or ticks = max-ticks [stop]
+  if ((mean main-Record = 1 and network-changes = 0) or ticks = max-ticks) and record? [record-state-of-simulation]
+  if (mean main-Record = 1 and network-changes = 0) or ticks = max-ticks [stop]
   if (ticks / record-each-n-steps) = floor(ticks / record-each-n-steps) and record? [record-state-of-simulation]
 end
 
@@ -396,7 +396,7 @@ to leave-the-neighborhood-join-a-new-one
   ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles]
 
   ;; We just check, that the network change happened.
-  set no-network-change FALSE
+  set network-changes network-changes + 1
 end
 
 
@@ -660,10 +660,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-10
-462
-65
+230
 495
+285
+528
 getPlace
 ask turtles [getPlace]
 NIL
@@ -710,7 +710,7 @@ boundary
 boundary
 0.01
 1
-0.15
+0.35
 0.01
 1
 NIL
@@ -739,10 +739,10 @@ set-seed?
 -1000
 
 BUTTON
-67
-462
-122
+287
 495
+342
+528
 getColor
 ask turtles [\n  set speak? TRUE\n  getColor\n]
 NIL
@@ -756,10 +756,10 @@ NIL
 1
 
 BUTTON
-120
-462
-175
+340
 495
+395
+528
 inspect
 inspect turtle 0\nask turtle 0 [print opinion-position]
 NIL
@@ -773,10 +773,10 @@ NIL
 1
 
 BUTTON
-175
-462
-230
+395
 495
+450
+528
 sizes
 show sort remove-duplicates [count turtles-here] of turtles 
 NIL
@@ -831,7 +831,7 @@ CHOOSER
 boundary-drawn
 boundary-drawn
 "constant" "uniform"
-0
+1
 
 PLOT
 967
@@ -1088,7 +1088,7 @@ INPUTBOX
 1423
 116
 file-name-core
-10_257_0.05_32_2_1_0.15_uniform_1_constant_vaguely-speak
+10_257_0.05_32_2_1_0.35_uniform_1_constant_vaguely-speak
 1
 0
 String
@@ -1221,7 +1221,7 @@ tolerance-level
 tolerance-level
 0
 1
-0.65
+0.5
 0.01
 1
 NIL
@@ -1242,7 +1242,7 @@ PLOT
 256
 1366
 376
-Has the network change?
+Number of network changes
 NIL
 NIL
 0.0
@@ -1253,7 +1253,22 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot  ifelse-value (not no-network-change) [10][0]"
+"default" 1.0 0 -16777216 true "" "plot network-changes / count turtles * 100"
+
+SLIDER
+12
+452
+184
+485
+conformity-level
+conformity-level
+0
+1
+0.5
+0.01
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
