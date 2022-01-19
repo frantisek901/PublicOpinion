@@ -1127,7 +1127,7 @@ CHOOSER
 mode
 mode
 "openly-listen" "vaguely-speak"
-1
+0
 
 PLOT
 967
@@ -1153,7 +1153,7 @@ INPUTBOX
 1423
 116
 file-name-core
-10_257_0.05_32_2_1_0.2_uniform_1_uniform_vaguely-speak
+10_257_0.05_32_2_1_0.2_uniform_1_uniform_openly-listen
 1
 0
 String
@@ -1286,7 +1286,7 @@ tolerance-level
 tolerance-level
 0
 1
-0.1
+0.8
 0.01
 1
 NIL
@@ -1321,25 +1321,25 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot network-changes / count turtles * 100"
 
 SLIDER
-99
-380
-220
-413
+9
+495
+130
+528
 conformity-level
 conformity-level
 0
 1
-0.1
+0.2
 0.01
 1
 NIL
 HORIZONTAL
 
 CHOOSER
-100
-413
-219
-458
+130
+495
+249
+540
 conformity-drawn
 conformity-drawn
 "constant" "uniform"
