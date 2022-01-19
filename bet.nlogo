@@ -28,7 +28,7 @@ breed [ghosts ghost]
 
 turtles-own [Opinion-position P-speaking Speak? Uncertainty Record Last-opinion Pol-bias Initial-opinion Tolerance Satisfied?]
 
-globals [main-Record components positions]
+globals [main-Record components positions no-network-change]
 
 
 ;; Initialization and setup
@@ -76,6 +76,8 @@ to setup
   ask links [set hidden? TRUE]
   ;; Setting the indicator of change for the whole simulation, again as non-stable.
   set main-Record n-values record-length [0]
+  ;; Setting control variable of network changes
+  set no-network-change TRUE
 
   reset-ticks
 
@@ -328,6 +330,9 @@ to go
   ;; Just checking and avoiding runtime errors part of code
   avoiding-run-time-errors
 
+  ;; Before a round erasing indicator of change
+  set no-network-change TRUE
+
   ;; True part of GO procedure!
   ask turtles [
     ;; speaking, coloring, updating and SATISFACTION!!!
@@ -347,8 +352,8 @@ to go
   ;; Finishing condition:
   ;; 1) We reached state, where no turtle changes for RECORD-LENGTH steps, i.e. average of MAIN-RECORD (list of averages of turtles/agents RECORD) is 1 or
   ;; 2) We reached number of steps specified in MAX-TICKS
-  if (mean main-Record = 1 or ticks = max-ticks) and record? [record-state-of-simulation]
-  if mean main-Record = 1 or ticks = max-ticks [stop]
+  if (mean main-Record = 1 or ticks = max-ticks) and no-network-change and record? [record-state-of-simulation]
+  if (mean main-Record = 1 or ticks = max-ticks) and no-network-change [stop]
   if (ticks / record-each-n-steps) = floor(ticks / record-each-n-steps) and record? [record-state-of-simulation]
 end
 
@@ -420,6 +425,8 @@ to leave-the-neighborhood-join-a-new-one
   ;; Lastly, we check whether each agent has at least one neighbor
   ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles]
 
+  ;; We just check, that the network change happened.
+  set no-network-change FALSE
 
 ;print "----------------------------------"
 end
@@ -1356,7 +1363,7 @@ tolerance-level
 tolerance-level
 0
 1
-0.0
+0.33
 0.01
 1
 NIL
