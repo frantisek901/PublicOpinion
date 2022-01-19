@@ -416,8 +416,14 @@ to leave-the-neighborhood-join-a-new-one
   ;; Secondly, we cut off all the links
   ask my-links [die]
 
-  ;; Thirdly, we start with one random agent as a seed of new neighborhood
-  create-links-with n-of nei-size other turtles
+  ;; Thirdly, random VS intentional construction of new neighborhood.
+  ifelse random-network-change? [
+    ;; We set new neighborhood randomly or...
+    create-links-with n-of nei-size other turtles
+  ][
+    ;; ...creates it out of the closest neighbors.
+    create-links-with min-n-of nei-size other turtles [opinion-distance]
+  ]
 
   ;; Lastly, we check whether each agent has at least one neighbor
   ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles]
@@ -430,17 +436,21 @@ end
 ;; subroutine for changing one link
 to rewire-the-most-annoying-link
   ;; Firstly, we cut the link with agent with the most different opinion
-  let annoyer max-one-of link-neighbors [opinion-distance]
-  ;show annoyer
-  ;show one-of my-links with [other-end = annoyer]
-  ask one-of my-links with [other-end = annoyer] [die]
+  ifelse random-network-change? [
+    ask one-of my-links [die]
+  ][
+    let annoyer max-one-of link-neighbors [opinion-distance]
+    ask one-of my-links with [other-end = annoyer] [die]
+  ]
 
   ;; Secondly, we choose for the agent a new partner with the most close opinion
   let potentials other turtles with [not link-neighbor? self]
-  let partner min-one-of potentials [opinion-distance]
-  create-link-with partner
-  ;show link [who] of self  [who] of partner
-  ;show partner
+  ifelse random-network-change? [
+    create-link-with one-of potentials
+  ][
+    let partner min-one-of potentials [opinion-distance]
+    create-link-with partner
+  ]
 
   ;; Lastly, we check whether each agent has at least one neighbor
   ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles print "Link just has been added!"]
@@ -715,9 +725,9 @@ NIL
 HORIZONTAL
 
 BUTTON
-230
+271
 495
-285
+326
 528
 getPlace
 ask turtles [getPlace]
@@ -794,9 +804,9 @@ set-seed?
 -1000
 
 BUTTON
-287
+328
 495
-342
+383
 528
 getColor
 ask turtles [\n  set speak? TRUE\n  getColor\n]
@@ -811,9 +821,9 @@ NIL
 1
 
 BUTTON
-340
+381
 495
-395
+436
 528
 inspect
 inspect turtle 0\nask turtle 0 [print opinion-position]
@@ -828,9 +838,9 @@ NIL
 1
 
 BUTTON
-395
+436
 495
-450
+491
 528
 sizes
 show sort remove-duplicates [count turtles-here] of turtles 
@@ -845,9 +855,9 @@ NIL
 1
 
 BUTTON
-230
+271
 462
-285
+326
 495
 HIDE!
 \nask turtles [set hidden? TRUE]
@@ -862,9 +872,9 @@ NIL
 1
 
 BUTTON
-284
+325
 462
-339
+380
 495
 SHOW!
 \nask turtles [set hidden? FALSE]\nask turtles [set size (max-pxcor / 10)]
@@ -907,9 +917,9 @@ PENS
 "default" 0.05 1 -16777216 true "" "histogram [Uncertainty] of turtles"
 
 BUTTON
-339
+380
 462
-427
+468
 495
 avg. Unretainty
 show mean [Uncertainty] of turtles
@@ -924,9 +934,9 @@ NIL
 1
 
 BUTTON
-426
+467
 462
-488
+529
 495
 Hide links
 ask links [set hidden? TRUE]
@@ -941,9 +951,9 @@ NIL
 1
 
 BUTTON
-488
+529
 462
-548
+589
 495
 Show links
 ask links [set hidden? FALSE]
@@ -988,9 +998,9 @@ NIL
 HORIZONTAL
 
 BUTTON
-547
+588
 462
-618
+659
 495
 avg. Opinion
 show mean [mean opinion-position] of turtles
@@ -1355,6 +1365,17 @@ network-changes
 17
 1
 11
+
+SWITCH
+102
+462
+271
+495
+random-network-change?
+random-network-change?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
