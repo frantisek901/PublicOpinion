@@ -24,7 +24,7 @@
 
 extensions [nw]
 
-turtles-own [Opinion-position P-speaking Speak? Uncertainty Record Last-opinion Pol-bias Initial-opinion Tolerance Satisfied?]
+turtles-own [Opinion-position P-speaking Speak? Uncertainty Record Last-opinion Pol-bias Initial-opinion Tolerance Conformity Satisfied?]
 
 globals [main-Record components positions network-changes]
 
@@ -61,7 +61,8 @@ to setup
     set P-speaking get-speaking  ;; ...assigning individual probability of speaking...
     set speak? speaking  ;; ...checking whether agent speaks...
     set Uncertainty get-uncertainty  ;;... setting value of Uncertainty.
-    set Tolerance get-tolerance  ;; Setting (probably) individual tolerance level, as well.
+    set Tolerance get-tolerance  ;; Setting individual tolerance level, as well as ...
+    set Conformity get-conformity  ;; setting individual conformity level.
     getColor  ;; Coloring the agents according their opinion.
     getPlace  ;; Moving agents to the opinion space according their opinions.
   ]
@@ -177,6 +178,20 @@ to-report list-to-string [LtS]
   ]
 
   report str
+end
+
+
+;; Sub-routine for assigning value of tolerance
+to-report get-conformity
+  ;; We have to initialize empty temporary variable
+  let cValue 0
+
+  ;; Then we draw the value according the chosen method
+  if conformity-drawn = "constant" [set cValue conformity-level + random-float 0]  ;; NOTE! 'random-float 0' is here for consuming one pseudorandom number to cunsume same number of pseudorandom numbers as "uniform
+  if conformity-drawn = "uniform" [set cValue ifelse-value (conformity-level < 0.5)
+                                                           [precision (random-float (2 * conformity-level)) 3]
+                                                           [precision (1 - (random-float (2 * (1 - conformity-level)))) 3]]
+  report cValue
 end
 
 ;; Sub-routine for assigning value of tolerance
@@ -1256,10 +1271,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot network-changes / count turtles * 100"
 
 SLIDER
-12
-452
-184
-485
+99
+380
+220
+413
 conformity-level
 conformity-level
 0
@@ -1269,6 +1284,16 @@ conformity-level
 1
 NIL
 HORIZONTAL
+
+CHOOSER
+100
+413
+219
+458
+conformity-drawn
+conformity-drawn
+"constant" "uniform"
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
