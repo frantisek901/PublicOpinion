@@ -461,14 +461,19 @@ to change-opinion-HK
       ;; note: since we use while-loop, we go through each item of the 'op-list', step by step, iteration by iteration.
       let i (item step op-list)
 
-      ;; them we update dimension of index 'i' drawn from the 'op-list' in the previous line:
+      ;; then we update dimension of index 'i' drawn from the 'op-list' in the previous line:
       ;; 1) we compute average position in given dimension of the calling/updating agent and all other agents from agent set 'influentials'
       ;;    by the command '(mean [item i opinion-position] of influentials)', and
-      ;; 2) we set value as new opinion position by command 'set opinion-position replace-item i opinion-position X' where 'X' is the mean opinion (ad 1, see line above)
+      ;; 2) the new value of opinion 'val' is not directly average, but it is weighted by the 'Conformity' (individual trait),
+      ;;    the closer 'Conformity' to 1, the closer agent jumps into the mean of others, the closer to 0, the less agent moves.
+      ;; 3) we set value as new opinion position by command 'set opinion-position replace-item i opinion-position X' where 'X' is the mean opinion (ad 1, see line above)
 
       ;; ad 1: averge position computation
       let val  precision (mean [item i opinion-position] of influentials) 3 ;; NOTE: H-K model really assumes that agent adopts immediatelly the 'consesual' position
-      ;; ad 2: assigning the value 'val'
+      ;; ad 2: updating/weighting 'val' by 'Conformity' and own opinion
+      let my item i opinion-position
+      set val my + ((val - my) * Conformity)
+      ;; ad 3: assigning the value 'val'
       set opinion-position replace-item i opinion-position val
 
       ;; advancement of counter 'step'
@@ -725,7 +730,7 @@ boundary
 boundary
 0.01
 1
-0.35
+0.2
 0.01
 1
 NIL
@@ -1077,7 +1082,7 @@ CHOOSER
 mode
 mode
 "openly-listen" "vaguely-speak"
-1
+0
 
 PLOT
 967
@@ -1103,7 +1108,7 @@ INPUTBOX
 1423
 116
 file-name-core
-10_257_0.05_32_2_1_0.35_uniform_1_constant_vaguely-speak
+10_257_0.05_32_2_1_0.2_uniform_1_uniform_openly-listen
 1
 0
 String
@@ -1181,7 +1186,7 @@ CHOOSER
 p-speaking-drawn
 p-speaking-drawn
 "constant" "uniform" "function"
-0
+1
 
 PLOT
 1166
@@ -1236,7 +1241,7 @@ tolerance-level
 tolerance-level
 0
 1
-0.5
+0.8
 0.01
 1
 NIL
@@ -1279,7 +1284,7 @@ conformity-level
 conformity-level
 0
 1
-0.5
+0.2
 0.01
 1
 NIL
@@ -1293,7 +1298,7 @@ CHOOSER
 conformity-drawn
 conformity-drawn
 "constant" "uniform"
-0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
