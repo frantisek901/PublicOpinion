@@ -430,9 +430,17 @@ end
 ;; subroutine for changing one link
 to rewire-the-most-annoying-link
   ;; Firstly, we cut the link with agent with the most different opinion
+  let annoyer max-one-of link-neighbors [opinion-distance]
+  ;show annoyer
+  ;show one-of my-links with [other-end = annoyer]
+  ask one-of my-links with [other-end = annoyer] [die]
 
   ;; Secondly, we choose for the agent a new partner with the most close opinion
-
+  let potentials other turtles with [not link-neighbor? self]
+  let partner min-one-of potentials [opinion-distance]
+  create-link-with partner
+  ;show link [who] of self  [who] of partner
+  ;show partner
 
   ;; Lastly, we check whether each agent has at least one neighbor
   ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles print "Link just has been added!"]
@@ -1135,7 +1143,7 @@ INPUTBOX
 1423
 116
 file-name-core
-10_257_0.05_32_2_1_0.2_uniform_1_uniform_openly-listen
+10_257_0.05_32_2_1_0.2_uniform_1_uniform_vaguely-speak
 1
 0
 String
@@ -1268,7 +1276,7 @@ tolerance-level
 tolerance-level
 0
 1
-0.8
+0.1
 0.01
 1
 NIL
@@ -1311,7 +1319,7 @@ conformity-level
 conformity-level
 0
 1
-0.2
+0.1
 0.01
 1
 NIL
@@ -1336,6 +1344,17 @@ network-change
 network-change
 "link" "community"
 0
+
+MONITOR
+1167
+211
+1276
+256
+NIL
+network-changes
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
