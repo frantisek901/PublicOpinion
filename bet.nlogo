@@ -24,8 +24,6 @@
 
 extensions [nw]
 
-breed [ghosts ghost]
-
 turtles-own [Opinion-position P-speaking Speak? Uncertainty Record Last-opinion Pol-bias Initial-opinion Tolerance Satisfied?]
 
 globals [main-Record components positions no-network-change]
@@ -59,11 +57,9 @@ to setup
   ask turtles [
     set Opinion-position n-values opinions [precision (1 - random-float 2) 3]  ;; We set opinions...
     set Last-opinion Opinion-position  ;; ...set last opinion as present opinion...
-    set Initial-opinion Opinion-position  ;; ...we record opinion as initial opinion ...
     set Record n-values record-length [0]  ;; ... we prepare indicator of turtle's stability, at all positions we set 0 as non-stability...
     set P-speaking get-speaking  ;; ...assigning individual probability of speaking...
     set speak? speaking  ;; ...checking whether agent speaks...
-    set Pol-bias get-bias  ;; ... setting value of political bias...
     set Uncertainty get-uncertainty  ;;... setting value of Uncertainty.
     set Tolerance get-tolerance  ;; Setting (probably) individual tolerance level, as well.
     getColor  ;; Coloring the agents according their opinion.
@@ -214,22 +210,6 @@ to-report get-speaking
 end
 
 
-;; Sub-routine for assigning value of ideological bias
-to-report get-bias
-  ;; initialize 'bias' variable
-  let bias 0
-
-  ;; uniformly generating number from interval (0, + bias-margin) and then
-  ;; moving it towards negative pole by (bias-margin * bias-of-bias),
-  ;; bias-of-bias is fraction [0, 1], 0 means full bias towards '+' pole, resulting in interval of bias [0, +bias-margin],
-  ;; 1 means full bias towards '-' pole, interval [-bias-margin, 0], 0.5 means ballanced, resulting in interval [-bias-margin/2, +bias-margin/2]
-  if bias-drawn = "uniform" [set bias precision ((random-float (bias-margin)) - (bias-margin * bias-of-bias)) 3]
-
-  ;; report the result back
-  report bias
-end
-
-
 ;; sub-routine for assigning value of uncertainty to the agent
 to-report get-uncertainty
   ;; We have to initialize empty temporary variable
@@ -237,13 +217,7 @@ to-report get-uncertainty
 
   ;; Then we draw the value according the chosen method
   if boundary-drawn = "constant" [set uValue boundary + random-float 0]  ;; NOTE! 'random-float 0' is here for consuming one pseudorandom number to cunsume same number of pseudorandom numbers as "uniform"
-  if boundary-drawn = "uniform" [set uValue precision (min-boundary + random-float (2 * boundary - min-boundary)) 3]
-  if boundary-drawn = "normal" [
-    set uValue precision (random-normal boundary sigma) 3
-    while [uValue < min-boundary or uValue > 1] [
-      set uValue precision (random-normal boundary sigma) 3
-    ]
-  ]
+  if boundary-drawn = "uniform" [set uValue precision (random-float (2 * boundary)) 3]
 
   ;; reporting value back for assigning
   report uValue
@@ -352,8 +326,8 @@ to go
   ;; Finishing condition:
   ;; 1) We reached state, where no turtle changes for RECORD-LENGTH steps, i.e. average of MAIN-RECORD (list of averages of turtles/agents RECORD) is 1 or
   ;; 2) We reached number of steps specified in MAX-TICKS
-  if (mean main-Record = 1 or ticks = max-ticks) and no-network-change and record? [record-state-of-simulation]
-  if (mean main-Record = 1 or ticks = max-ticks) and no-network-change [stop]
+  if ((mean main-Record = 1 and no-network-change) or ticks = max-ticks) and record? [record-state-of-simulation]
+  if (mean main-Record = 1 and no-network-change) or ticks = max-ticks [stop]
   if (ticks / record-each-n-steps) = floor(ticks / record-each-n-steps) and record? [record-state-of-simulation]
 end
 
@@ -408,27 +382,21 @@ end
 
 ;; subroutine for leaving the neighborhood and joining a new one -- agent is decided to leave, we just process it here
 to leave-the-neighborhood-join-a-new-one
-  ;show "I'm not satisfied!"
   ;; Firstly, we have to count agents neighbors, to determine how many links agent has to create in the main part of the procedure
-  ;let old-nei link-neighbors
   let nei-size count link-neighbors
 
   ;; Secondly, we cut off all the links
   ask my-links [die]
 
   ;; Thirdly, we start with one random agent as a seed of new neighborhood
-  ;let nei-seed n-of nei-size other turtles
   create-links-with n-of nei-size other turtles
   ask links [set hidden? TRUE]  ;; Just hiding links for better speed of code
- ;print nei-seed
 
   ;; Lastly, we check whether each agent has at least one neighbor
   ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles]
 
   ;; We just check, that the network change happened.
   set no-network-change FALSE
-
-;print "----------------------------------"
 end
 
 
@@ -459,13 +427,6 @@ to change-opinion-HK
 
   ;; 3) we also add the updating agent into 'influentials'
   set influentials (turtle-set self influentials)
-  if social-bias [
-    ;; in case Social-bias is effective, then updating agent will create 'ghost',
-    ;; its younger self with same opinion which agent had at the start of simulation (result of its socialization).
-    hatch-ghosts 1 [set opinion-position [Initial-opinion] of myself]
-    ;; Then we include this 'ghost' into the agent-set 'influentials'
-    set influentials (turtle-set ghosts influentials)
-  ]
 
   ;; we check whether there is someone else then calling/updating agent in the agent set 'influentials'
   if count influentials > 1 [
@@ -488,24 +449,17 @@ to change-opinion-HK
       ;; them we update dimension of index 'i' drawn from the 'op-list' in the previous line:
       ;; 1) we compute average position in given dimension of the calling/updating agent and all other agents from agent set 'influentials'
       ;;    by the command '(mean [item i opinion-position] of influentials)', and
-      ;; 2) we update average value through the pol-bias
-      ;; 3) we set value as new opinion position by command 'set opinion-position replace-item i opinion-position X' where 'X' is the mean opinion (ad 1, see line above)
+      ;; 2) we set value as new opinion position by command 'set opinion-position replace-item i opinion-position X' where 'X' is the mean opinion (ad 1, see line above)
 
       ;; ad 1: averge position computation
       let val  precision (mean [item i opinion-position] of influentials) 3 ;; NOTE: H-K model really assumes that agent adopts immediatelly the 'consesual' position
-      ;; ad 2: application of bias
-      if pol-bias < 0 [set val (((1 + val) * (1 + pol-bias)) - 1)]
-      if pol-bias > 0 [set val (1 - ((1 - val) * (1 - pol-bias)))]
-      ;; ad 3: assigning the value 'val'
+      ;; ad 2: assigning the value 'val'
       set opinion-position replace-item i opinion-position val
 
       ;; advancement of counter 'step'
       set step step + 1
     ]
   ]
-
-  ;; In case there are some ghosts, kill them!
-  if (count ghosts) > 0 [ask ghosts [die]]
 end
 
 
@@ -876,23 +830,8 @@ CHOOSER
 306
 boundary-drawn
 boundary-drawn
-"constant" "uniform" "normal"
-1
-
-SLIDER
-999
-107
-1171
-140
-sigma
-sigma
+"constant" "uniform"
 0
-1
-0.07
-0.01
-1
-NIL
-HORIZONTAL
 
 PLOT
 967
@@ -911,21 +850,6 @@ false
 "" ""
 PENS
 "default" 0.05 1 -16777216 true "" "histogram [Uncertainty] of turtles"
-
-SLIDER
-999
-173
-1171
-206
-mu
-mu
-0.01
-1
-0.08
-0.01
-1
-NIL
-HORIZONTAL
 
 BUTTON
 339
@@ -1138,32 +1062,7 @@ CHOOSER
 mode
 mode
 "openly-listen" "vaguely-speak"
-0
-
-CHOOSER
-1172
-239
-1264
-284
-bias-drawn
-bias-drawn
-"uniform" "no bias"
-0
-
-SLIDER
-1172
-284
-1344
-317
-bias-margin
-bias-margin
-0
-0.1
-0.0
-0.002
 1
-NIL
-HORIZONTAL
 
 PLOT
 967
@@ -1183,48 +1082,22 @@ false
 PENS
 "default" 0.05 1 -16777216 true "" "histogram [Tolerance] of turtles"
 
-SWITCH
-1264
-239
-1361
-272
-social-bias
-social-bias
-1
-1
--1000
-
 INPUTBOX
-1172
-68
-1424
-174
+1171
+10
+1423
+116
 file-name-core
-10_257_0.05_32_2_1_0.15_uniform_1_constant_openly-listen
+10_257_0.05_32_2_1_0.15_uniform_1_constant_vaguely-speak
 1
 0
 String
 
-SLIDER
-1172
-317
-1344
-350
-bias-of-bias
-bias-of-bias
-0
-1
-0.0
-0.01
-1
-NIL
-HORIZONTAL
-
 BUTTON
-1320
-174
-1405
-207
+1319
+116
+1404
+149
 RECORD!
 record-state-of-simulation
 NIL
@@ -1238,10 +1111,10 @@ NIL
 1
 
 SWITCH
-1172
-174
-1320
-207
+1171
+116
+1319
+149
 construct-name?
 construct-name?
 0
@@ -1249,10 +1122,10 @@ construct-name?
 -1000
 
 SWITCH
-1172
-206
-1275
-239
+1171
+148
+1274
+181
 record?
 record?
 1
@@ -1275,10 +1148,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-1275
-206
-1397
-239
+1274
+148
+1396
+181
 HK-benchmark?
 HK-benchmark?
 1
@@ -1328,21 +1201,6 @@ record-each-n-steps
 NIL
 HORIZONTAL
 
-SLIDER
-1000
-140
-1171
-173
-min-boundary
-min-boundary
-0
-1
-0.0
-0.001
-1
-NIL
-HORIZONTAL
-
 SWITCH
 746
 43
@@ -1363,7 +1221,7 @@ tolerance-level
 tolerance-level
 0
 1
-0.33
+0.65
 0.01
 1
 NIL
@@ -1378,6 +1236,24 @@ tolerance-drawn
 tolerance-drawn
 "constant" "uniform"
 1
+
+PLOT
+1166
+256
+1366
+376
+Has the network change?
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot  ifelse-value (not no-network-change) [10][0]"
 
 @#$#@#$#@
 ## WHAT IS IT?
