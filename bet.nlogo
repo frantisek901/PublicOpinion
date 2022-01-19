@@ -9,7 +9,7 @@
 ;; MAIN BRANCH: THIS IS OUR THE BEST MODEL SO FAR
 
 ;; Created:  2021-10-21 FranCesko
-;; Edited:   2022-01-17 FranCesko
+;; Edited:   2022-01-19 FranCesko
 ;; Encoding: windows-1250
 ;; NetLogo:  6.2.2
 ;;
@@ -18,25 +18,7 @@
 ;;       the cut off all the links and create new set of links, i.e., join new neighborhood.
 ;;
 ;; Elle: I do cluster detection using igraph:: cluster_walktrap() in R
-
-
-;; WISHLIST:
 ;;
-
-
-;; Parameters:
-;;   Small-world network (Watts-Strogatz)
-;;   agents have more than 1 type of attitude
-;;   opinion on scale <-1;+1>
-;;   boundary -- defines range as fraction of maximum possible Eucleid distance in n-dimensional space, this maximum depends on number of opinions: sqrt(opinions * 4)
-;;
-
-;; TO-DO:
-;; 1) code algorithm for deciding whether agent updates opinion or leaves the neighborhood and joins a new neighborhood
-;; 2) code leaving/joining algorithm
-;;
-
-
 
 
 
@@ -44,7 +26,7 @@ extensions [nw]
 
 breed [ghosts ghost]
 
-turtles-own [Opinion-position P-speaking Speak? Uncertainty Record Last-opinion Pol-bias Initial-opinion Tolerance]
+turtles-own [Opinion-position P-speaking Speak? Uncertainty Record Last-opinion Pol-bias Initial-opinion Tolerance Satisfied?]
 
 globals [main-Record components positions]
 
@@ -313,9 +295,8 @@ to-report patch-color
 end
 
 
-;; Main routine
-to go
-;; Just checking and avoiding runtime errors part of code
+;; Sub routine just for catching run-time errors
+to avoiding-run-time-errors
   ;; Redundant conditions which should be avoided -- if the boundary is drawn as constant, then is completely same whether agents vaguely speak or openly listen,
   ;; seme case is for probability speaking of 100%, then it's same whether individual probability is drawn as constant or uniform, result is still same: all agents has probability 100%.
   if avoid-redundancies? and mode = "vaguely-speak" and boundary-drawn = "constant" [stop]
@@ -325,11 +306,11 @@ to go
   ;; Check whether we set properly parameter 'updating' --
   ;; if we want update more dimensions than exists in simulation, then we set 'updating' to max of dimensions, i.e. 'opinions'
   if updating > opinions [set updating opinions]
+end
 
 
-;; True part of GO procedure!
-  ask turtles [
-    ;; speaking and coloring
+;; Just envelope for updating agent at the begining of GO procedure
+to preparing-myself
     set speak? speaking
     getColor
     getPlace
@@ -337,18 +318,43 @@ to go
     ;; storing previous opinion position as 'Last-opinion'
     set Last-opinion Opinion-position
 
-
-  ;; Mechanism of own opinion or network change -- decision and rossolution
     ;; Firstly we have to determine dissatisfaction with the neighborhood
-    let satisfied? get-satisfaction
+    set Satisfied? get-satisfaction
+end
 
+
+;; Main routine
+to go
+  ;; Just checking and avoiding runtime errors part of code
+  avoiding-run-time-errors
+
+  ;; True part of GO procedure!
+  ask turtles [
+    ;; speaking, coloring, updating and SATISFACTION!!!
+    preparing-myself
+
+    ;; Mechanism of own opinion or network change -- decision and rossolution
     ;; In case of dissatisfaction agents leave, otherwise updates opinion
-    ifelse not satisfied?
-      [leave-the-neighborhood-join-a-new-one]
-      [if model = "HK" [change-opinion-HK]]
+    ifelse not satisfied? [leave-the-neighborhood-join-a-new-one] [if model = "HK" [change-opinion-HK]]
     ;; Note: Now here is only Hegselmann-Krause algorithm, but in the future we might easily employ other algorithms here!
   ]
 
+  ;; Recoloring patches, computing how model settled down
+  updating-patches-and-globals
+
+  tick
+
+  ;; Finishing condition:
+  ;; 1) We reached state, where no turtle changes for RECORD-LENGTH steps, i.e. average of MAIN-RECORD (list of averages of turtles/agents RECORD) is 1 or
+  ;; 2) We reached number of steps specified in MAX-TICKS
+  if (mean main-Record = 1 or ticks = max-ticks) and record? [record-state-of-simulation]
+  if mean main-Record = 1 or ticks = max-ticks [stop]
+  if (ticks / record-each-n-steps) = floor(ticks / record-each-n-steps) and record? [record-state-of-simulation]
+end
+
+
+;; Updating patches and global variables
+to updating-patches-and-globals
   ;; Patches update color according the number of turtles on it.
   ask patches [set pcolor patch-color]
 
@@ -362,15 +368,6 @@ to go
   ]
   ;; Then we might update it for the whole:
   set main-Record fput precision (mean [mean Record] of turtles) 3 but-last main-Record
-
-  tick
-
-  ;; Finishing condition:
-  ;; 1) We reached state, where no turtle changes for RECORD-LENGTH steps, i.e. average of MAIN-RECORD (list of averages of turtles/agents RECORD) is 1 or
-  ;; 2) We reached number of steps specified in MAX-TICKS
-  if (mean main-Record = 1 or ticks = max-ticks) and record? [record-state-of-simulation]
-  if mean main-Record = 1 or ticks = max-ticks [stop]
-  if (ticks / record-each-n-steps) = floor(ticks / record-each-n-steps) and record? [record-state-of-simulation]
 end
 
 
@@ -400,76 +397,29 @@ to-report get-satisfaction
   ]
   ;print ((1 - (count supporters / count visibles)) < Tolerance)
   ;; Now we can return the True/False value, whether the agent is satisfied and among visible neighbors are enough supporters
-  report ((1 - (count supporters / count visibles)) < Tolerance)
+  report ifelse-value (count visibles > 0) [((1 - (count supporters / count visibles)) < Tolerance)][TRUE]  ;; In case no visibles are in the neighborhood, then agent is happy.
 end
+
 
 ;; subroutine for leaving the neighborhood and joining a new one -- agent is decided to leave, we just process it here
 to leave-the-neighborhood-join-a-new-one
   ;show "I'm not satisfied!"
   ;; Firstly, we have to count agents neighbors, to determine how many links agent has to create in the main part of the procedure
-  let old-nei link-neighbors
-  let nei-size count old-nei
+  ;let old-nei link-neighbors
+  let nei-size count link-neighbors
 
   ;; Secondly, we cut off all the links
   ask my-links [die]
-  ask links [set hidden? TRUE]
 
   ;; Thirdly, we start with one random agent as a seed of new neighborhood
-  let nei-seed one-of other turtles
-  create-link-with nei-seed
-  ;print nei-seed
+  ;let nei-seed n-of nei-size other turtles
+  create-links-with n-of nei-size other turtles
+  ask links [set hidden? TRUE]  ;; Just hiding links for better speed of code
+ ;print nei-seed
 
-  ;; Fourthly, we record neighbors of nei-seed in the list
-  let nei-list [[self] of link-neighbors] of nei-seed
-  set nei-list remove self nei-list  ;; Removing 'self' from the list in case it's there.
+  ;; Lastly, we check whether each agent has at least one neighbor
+  ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles]
 
-  ;; Fifthly, we do cycle, until we create/join the full neighborhood of 'nei-size'
-  while [count link-neighbors < nei-size] [
-    ;; Randomly choosing one new neighbor from the list
-    let new-nei one-of nei-list
-    ;print new-nei
-    ;print nei-list
-    ;; Creating a link to new-nei
-    create-link-with new-nei
-
-    ;; Adding all neis of 'new-nei' into the 'nei-list'
-    set nei-list sentence nei-list ([[self] of link-neighbors] of new-nei)
-    foreach [self] of link-neighbors [nt -> set nei-list remove nt nei-list]
-
-   ;; Cleaning 'self' and 'link-neighbors' from 'nei-list' -- avoiding creating link with herself or existing neis
-   set nei-list remove self nei-list
-  ]
-  ask links [set hidden? TRUE]
-
-  ;print sort nei-list
-  ;print count link-neighbors
-  ;print nei-size
-
-  ;; Lastly, the agent asks whole 'old-nei' to find a new nei instead of him
-    ;; Firstly, we create list of all neigbors of 'link-neighbors'
-    let our-list []  ;; Initialize empty list.
-    (foreach [self] of old-nei [mn -> ask mn [(foreach [self] of link-neighbors [X -> set our-list sentence our-list ([self] of link-neighbors)])]])  ;; Add all neis of all my neis to the list.
-    ;show sort our-list
-    foreach [self] of old-nei [mcn -> set our-list remove mcn our-list]  ;; Removing all current neis from the list.
-    set our-list remove self our-list
-    ;print sort our-list
-
-  if not empty? our-list [  ;; This avoids runtime error: Sometimes agent leaves mutually connected neighborhood, so the 'our-list' might be empty after leaving of leaving agent
-
-    let new-nei one-of our-list
-    ;print new-nei
-
-    ;; Secondly we assign new node 'new-nei' to the whole 'old-nei'
-    ask old-nei [
-    ;; Randomly choosing one new neighbor from the list
-    ;print new-nei
-    ;print nei-list
-      ;; Creating a link to new-nei
-      create-link-with new-nei
-    ;print sort link-neighbors
-    ]
-   ]
- ask links [set hidden? TRUE]
 
 ;print "----------------------------------"
 end
@@ -697,7 +647,7 @@ N-agents
 N-agents
 10
 1000
-30.0
+257.0
 1
 1
 NIL
@@ -712,7 +662,7 @@ n-neis
 n-neis
 1
 500
-10.0
+32.0
 1
 1
 NIL
@@ -799,7 +749,7 @@ boundary
 boundary
 0.01
 1
-0.3
+0.15
 0.01
 1
 NIL
@@ -1243,7 +1193,7 @@ INPUTBOX
 1424
 174
 file-name-core
-10_30_0.05_10_2_1_0.3_uniform_1_uniform_openly-listen
+10_257_0.05_32_2_1_0.15_uniform_1_constant_openly-listen
 1
 0
 String
@@ -1336,7 +1286,7 @@ CHOOSER
 p-speaking-drawn
 p-speaking-drawn
 "constant" "uniform" "function"
-1
+0
 
 PLOT
 1166
@@ -1406,7 +1356,7 @@ tolerance-level
 tolerance-level
 0
 1
-0.5
+0.0
 0.01
 1
 NIL
@@ -1420,7 +1370,7 @@ CHOOSER
 tolerance-drawn
 tolerance-drawn
 "constant" "uniform"
-0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
