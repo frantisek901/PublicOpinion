@@ -329,8 +329,13 @@ to go
 
     ;; Mechanism of own opinion or network change -- decision and rossolution
     ;; In case of dissatisfaction agents leave, otherwise updates opinion
-    ifelse not satisfied? [leave-the-neighborhood-join-a-new-one] [if model = "HK" [change-opinion-HK]]
-    ;; Note: Now here is only Hegselmann-Krause algorithm, but in the future we might easily employ other algorithms here!
+    ifelse not satisfied? [
+      change-of-network
+      set network-changes network-changes + 1  ;; We advance the counter of network changes -- now, one just happened.
+    ] [
+      if model = "HK" [change-opinion-HK]
+      ;; Note: Now here is only Hegselmann-Krause algorithm, but in the future we might easily employ other algorithms here!
+    ]
   ]
 
   ;; Recoloring patches, computing how model settled down
@@ -395,6 +400,14 @@ to-report get-satisfaction
 end
 
 
+;; envelope controlling the way, how we change the network
+to change-of-network
+  if network-change = "link" [rewire-the-most-annoying-link]
+  if network-change = "community" [leave-the-neighborhood-join-a-new-one]
+  ;; Note: here might be other ways in the future, that's why the 'ifelse' structure is not used here
+end
+
+
 ;; subroutine for leaving the neighborhood and joining a new one -- agent is decided to leave, we just process it here
 to leave-the-neighborhood-join-a-new-one
   ;; Firstly, we have to count agents neighbors, to determine how many links agent has to create in the main part of the procedure
@@ -405,13 +418,27 @@ to leave-the-neighborhood-join-a-new-one
 
   ;; Thirdly, we start with one random agent as a seed of new neighborhood
   create-links-with n-of nei-size other turtles
-  ask links [set hidden? TRUE]  ;; Just hiding links for better speed of code
 
   ;; Lastly, we check whether each agent has at least one neighbor
   ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles]
 
-  ;; We just check, that the network change happened.
-  set network-changes network-changes + 1
+  ;; P.S. Just hiding links for better speed of code -- when we change/cut a link, all links become visible and that slows down the simulation.
+  ask links [set hidden? TRUE]
+end
+
+
+;; subroutine for changing one link
+to rewire-the-most-annoying-link
+  ;; Firstly, we cut the link with agent with the most different opinion
+
+  ;; Secondly, we choose for the agent a new partner with the most close opinion
+
+
+  ;; Lastly, we check whether each agent has at least one neighbor
+  ask turtles with [(count link-neighbors) = 0] [create-link-with one-of other turtles print "Link just has been added!"]
+
+  ;; P.S. Just hiding links for better speed of code -- when we change/cut a link, all links become visible and that slows down the simulation.
+  ask links [set hidden? TRUE]
 end
 
 
@@ -1082,7 +1109,7 @@ CHOOSER
 mode
 mode
 "openly-listen" "vaguely-speak"
-0
+1
 
 PLOT
 967
@@ -1299,6 +1326,16 @@ conformity-drawn
 conformity-drawn
 "constant" "uniform"
 1
+
+CHOOSER
+10
+450
+102
+495
+network-change
+network-change
+"link" "community"
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
