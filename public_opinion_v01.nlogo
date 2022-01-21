@@ -67,9 +67,9 @@ to setup
 
     ;	- Each agent has family ties, coworker ties, and friend ties. This may be done a number of ways: agentsets, links, different link breeds, hypergraph etc. Not sure of the best way. This could also be done outside of agent generation, in a network setup routine.
 
-    set num-family-ties random 5
-    set num-coworker-ties random 10
-    set num-friend-ties random 10
+    set num-family-ties 1 + random 5
+    set num-coworker-ties 1 + random 10
+    set num-friend-ties 1 + random 10
     ;; !!!FrK: Be aware that this code might lead with probability 0.002 to situation that some agent will have no links,
     ;; !!!FrK: now it is not the serious problem since we test model with 20 turtles/agents, but on larger experiment runtime error will happen for sure.
     ;; !!!FrK: Problem is that code 'random 5' generates integers from 0 to 4, 'random 10' from 0 to 9.
@@ -150,9 +150,9 @@ to setup
   ; now try
   ;print("now try this")
 
-  print [(word [who] of both-ends " " breed)] of links
+  ;print [(word [who] of both-ends " " breed)] of links
 
-  print [ map [ t -> [ (word breed " " who) ] of t ] (list end1 end2) ] of links
+  ;print [ map [ t -> [ (word breed " " who) ] of t ] (list end1 end2) ] of links
 
   ; Then that can be modified to write the edge list to a csv file.
   ; This works, believe it or not, but it doesn't have the link breed:
@@ -188,8 +188,8 @@ to go
     ; I'm just using the variable from the setup right now, but turtles could have differing interaction numbers in the future
 
     set my-interactions n-of num-interactions my-links
-    print [ [(word breed " " who)] of other-end ] of my-interactions
-    print [ (word other-end) ] of my-interactions
+    ;print [ [(word breed " " who)] of other-end ] of my-interactions
+    ;print [ (word other-end) ] of my-interactions
 
 
   ]
@@ -273,7 +273,7 @@ BUTTON
 66
 go
 go
-NIL
+T
 1
 T
 OBSERVER
