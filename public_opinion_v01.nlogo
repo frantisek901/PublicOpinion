@@ -1,4 +1,4 @@
-extensions [ palette csv ]
+extensions [ palette csv nw matrix ]
 
 globals [ num-agent num-interactions ]
 
@@ -230,7 +230,7 @@ number-of-agents
 number-of-agents
 20
 100
-20.0
+30.0
 1
 1
 NIL
@@ -272,12 +272,12 @@ SLIDER
 657
 38
 830
-72
+71
 transparency
 transparency
 0
 255
-255.0
+90.0
 1
 1
 NIL
@@ -287,7 +287,7 @@ TEXTBOX
 660
 19
 797
-36
+37
 Link transparency
 11
 0.0
@@ -635,7 +635,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
