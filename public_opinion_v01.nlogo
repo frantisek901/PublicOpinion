@@ -53,6 +53,12 @@ to setup
     ;    set opinion -50
     ;    set opinion opinion + random 100
     set opinion random 100
+    ;; !!!FrK: Now the opinion is generated from 0 to 99,
+    ;; !!!FrK: if we want -50 to +50 we need code 'set opinion -50 + random 101', since 'random 101' generates integers from 0 to 100.
+    ;; !!!FrK: But because of color palette we need to stay on 0--100, se then 'set opinion random 101'.
+    ;; !!!FrK: I know how my comments my look like, in Czech we say these people 'hnidopich' which means 'flea hunter' :-),
+    ;; !!!FrK: BUT we easily might produce an artifact by this slight asymetry, in very ballanced scenario might big clusters happen
+    ;; !!!FrK: near the 0 since the symetrically oposite value taken for granted 100 would be missing.
     set color palette:scale-gradient [[ 255 0 0 ] [ 255 255 255 ] [0 0 255]] opinion 0 100
 
     ;	- Each agent has a tolerance for other opinions. Allowed distance of another agents' opinion, e.g. 20. This can be used for deciding on whether to strengthen or weaken a tie.
@@ -64,6 +70,20 @@ to setup
     set num-family-ties random 5
     set num-coworker-ties random 10
     set num-friend-ties random 10
+    ;; !!!FrK: Be aware that this code might lead with probability 0.002 to situation that some agent will have no links,
+    ;; !!!FrK: now it is not the serious problem since we test model with 20 turtles/agents, but on larger experiment runtime error will happen for sure.
+    ;; !!!FrK: Problem is that code 'random 5' generates integers from 0 to 4, 'random 10' from 0 to 9.
+    ;; !!!FrK: Solution might be code '1 + random 5' which generates random integers from 1 to 5, or
+    ;; !!!FrK: to check if every turle/agent has at least one link and in case it has no links,
+    ;; !!!FrK: then randomly choose which type of link we creates for this agent and then create this link.
+    ;; !!!FrK: We maight also decide that in case of 'family' we will go for '1 + random 5',
+    ;; !!!FrK: since we assume that every agent has to have at least one family relative,
+    ;; !!!FrK: and the rest of the code we let as it is, since we let agents have no job and no friends.
+    ;; !!!FrK: Last solution that comes to my mind is to parametrize the minima:
+    ;; !!!FrK: we create sliders 'min-family' 'min-coworker' 'min-frind' and the code we change to 'min-family + random 5' etc.,
+    ;; !!!FrK: but this probably also would lead to demand parametrize maxima,
+    ;; !!!FrK: so we will end up with something like 'min-family + random (max-family - min-family + 1)' and things would get more and more complicated...
+    ;; !!!FrK: And we would like to keep it simple, right? Yes, I'm not the right person for this sentence :-)
 
     ;set color opinion
 
@@ -86,6 +106,10 @@ to setup
   ask n-of 10 family [ set color yellow]
   ask n-of 10 coworkers [ set color green]
   ask n-of 10 friends [ set color blue]
+  ;; !!!FrK: I don't understand this. This and the following code means that
+  ;; !!!FrK: some links will color twice to the same color.
+  ;; !!!FrK: I am very bad in coloring, this is may be some trick, so please explain,
+  ;; !!!FrK: what opportunity it gives us to color 'n-of 10' links twice.
 
   ask family [ set color yellow]
   ask coworkers [ set color green]
@@ -230,7 +254,7 @@ number-of-agents
 number-of-agents
 20
 100
-30.0
+20.0
 1
 1
 NIL
