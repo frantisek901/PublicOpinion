@@ -164,6 +164,9 @@ to setup
   ; TODO: create slider for this num-interactions
   set num-interactions 2
 
+  reset-ticks
+  ;; !!!FrK: Sorry for touching the code, but without this initialization I can't play with data pipeline.
+
 end
 
 ;## go (go is the standard name for the main action loop routine)
@@ -198,6 +201,9 @@ to go
   ;4. Output new ties matrix for writing to table/file, polarization stats.
   ;5. Check if ties matrix has changed, if not maybe we can stop.
   ;6. New tick (loop to beginning of go to do it all over again)
+
+  tick
+  ;; !!!FrK: Sorry for touching the code, but without this initialization I can't play with data pipeline.
 
 end
 @#$#@#$#@
