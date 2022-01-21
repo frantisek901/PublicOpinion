@@ -56,25 +56,25 @@ nl@experiment  = experiment(expname="firstTry",
                             idsetup="setup",
                             idgo="go",
                             runtime=50,
-                            evalticks=c(0, seq(40,50, 5)),
-                            metrics=c("count turtles", "count turtles with [opinion < 50]"),
+                            evalticks=seq(0, 50, 25),
+                            metrics=c("count turtles", "count turtles with [opinion < 50]", "count links"),
                             variables = list('number-of-agents' = list(min=20, max=100, qfun="qunif"),
                                              'agent-tolerance' = list(min=10, max=90, qfun="qunif")),
-                            constants = list("model-version" = "V01",
-                                             "transparency" = 255))
+                            constants = list("transparency" = 255))
 
 
 ## Attaching a simulation design:
 nl@simdesign =  simdesign_lhs(nl=nl,
-                              samples=2,
+                              samples=10,
                               nseeds=3,
-                              precision=3)
+                              precision=0)
 
 
 ## Running simulations:
+a = Sys.time()
 results = run_nl_all(nl = nl)
-
-
+Sys.time() - a
+results
 
 
 
