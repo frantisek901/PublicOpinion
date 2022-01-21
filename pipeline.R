@@ -30,12 +30,49 @@ library(tibble)
 
 # Controling NetLogo from R: The first tries ------------------------------
 
+## Creation of `nl` object:
+
+# Windows default NetLogo installation path (adjust to your needs!):
+netlogopath = "c:/Program Files/NetLogo 6.2.2/"
+## QUESTION to more experienced:
+#  Does anyone know the way how to find the path to our own NetLogo instalations without setting it manually?
+#  I am afraid that this manual setting forces many people avoid good things -- many ncluding me...
+
+modelpath = "public_opinion_v01.nlogo"
+
+outpath = "/OutputData"
+
+nl = nl(nlversion = "6.2.2",
+        nlpath = netlogopath,
+        modelpath = modelpath,
+        jvmmem = 1024)
 
 
+## Attaching an experiment:
+nl@experiment  = experiment(expname="firstTry",
+                            outpath=outpath,
+                            repetition=1,
+                            tickmetrics="true",
+                            idsetup="setup",
+                            idgo="go",
+                            runtime=50,
+                            evalticks=c(0, seq(40,50, 5)),
+                            metrics=c("count turtles", "count turtles with [opinion < 50]"),
+                            variables = list('number-of-agents' = list(min=20, max=100, qfun="qunif"),
+                                             'agent-tolerance' = list(min=10, max=90, qfun="qunif")),
+                            constants = list("model-version" = "V01",
+                                             "transparency" = 255))
 
 
+## Attaching a simulation design:
+nl@simdesign =  simdesign_lhs(nl=nl,
+                              samples=2,
+                              nseeds=3,
+                              precision=3)
 
 
+## Running simulations:
+results = run_nl_all(nl = nl)
 
 
 
