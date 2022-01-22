@@ -2,3 +2,6 @@
 .Rproj.user
 *.Rproj
 /OutputData
+.Rhistory
+.RData
+
