@@ -13,7 +13,7 @@
 ##
 
 ## Encoding: windows-1250
-## Last edit: 2022-01-21 Fran»esko
+## Last edit: 2022-01-22 Fran»esko
 ##
 
 
