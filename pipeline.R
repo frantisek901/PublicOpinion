@@ -44,49 +44,76 @@ modelpath = "public_opinion_v01.nlogo"
 
 outpath = paste0(getwd(),"/OutputData")
 
-nl2 = nl(nlversion = "6.2.2",
+nl = nl(nlversion = "6.2.2",
         nlpath = netlogopath,
         modelpath = modelpath,
-        jvmmem = 1024)
+        jvmmem = 2048)
 
 
 ## Attaching an experiment:
-nl2@experiment = experiment(expname="firstTry",
+nl@experiment = experiment(expname="firstTry",
                             outpath=outpath,
                             repetition=1,
                             tickmetrics="true",
                             idsetup="setup",
                             idgo="go",
                             runtime=50,
-                            evalticks=seq(0, 50, 25),
-                            metrics=c("count turtles", "count turtles with [opinion < 50]", "count links"),
-                            variables = list('number-of-agents' = list(min=20, max=100, step = 20),
-                                             'agent-tolerance' = list(min=10, max=90, step = 20)),
+                            evalticks=0:50,
+                            metrics = c("count turtles", "count turtles with [opinion < 50]", "count links"),
+                            metrics.turtles = list("turtles" = c("who", "opinion", "tolerance", "num-family-ties", "num-coworker-ties", "num-friend-ties")),
+                            metrics.links = list(
+                              "family" = c("[who] of end1", "[who] of end2", "weight"),
+                              "coworkers" = c("[who] of end1", "[who] of end2", "weight"),
+                              "friends" = c("[who] of end1", "[who] of end2", "weight")),
+                            variables = list('number-of-agents' = list(min=20, max=100, step = 40),
+                                             'agent-tolerance' = list(min=10, max=90, step = 40)),
                             constants = list("transparency" = 255))
 
 
 ## Attaching a simulation design:
-nl2@simdesign = simdesign_ff(nl=nl2, nseeds=3)
+nl@simdesign = simdesign_ff(nl=nl, nseeds=3)
 
 
 ## Running a single simulation:
 a = Sys.time()
-results = run_nl_one(nl = nl, seed = getsim(nl, "simseeds")[1], siminputrow = 1)
+results = run_nl_one(nl = nl, seed = getsim(nl, "simseeds")[1], siminputrow = 3)
 Sys.time() - a
 
 
 ## Running an experiment:
 a = Sys.time()
-results = run_nl_all(nl = nl2)
+results = run_nl_all(nl = nl)
 Sys.time() - a
 results
 
 
 ## Attaching results to `nl` object:
-setsim(nl2, "simoutput") = results
-write_simoutput(nl2)  # Writing output to the output folder.
-analyze_nl(nl2)  # Further analysis.
-eval_simoutput(nl2)  # Kinda evaluation.
+setsim(nl, "simoutput") = results
+write_simoutput(nl)  # Writing output to the output folder.
+analyze_nl(nl)  # Further analysis.
+eval_simoutput(nl)  # Kinda evaluation.
+
+
+## Something with network...
+nl.graph = nl_to_graph(nl)
+
+# Tick 0
+nl.graph.0 = nl.graph$spatial.links[[1]]
+V(nl.graph.0)
+E(nl.graph.0)
+plot.igraph(nl.graph.0, vertex.size=8, vertex.label=NA, edge.arrow.size=0.2)
+
+# Tick 250
+nl.graph.250 = nl.graph$spatial.links[[2]]
+V(nl.graph.250)
+E(nl.graph.250)
+plot.igraph(nl.graph.250, vertex.size=8, vertex.label=NA, edge.arrow.size=0.2)
+
+# Tick 500
+nl.graph.500 = nl.graph$spatial.links[[3]]
+V(nl.graph.500)
+E(nl.graph.500)
+plot.igraph(nl.graph.500, vertex.size=8, vertex.label=NA, edge.arrow.size=0.2)
 
 
 ## Let's draw some graph:
@@ -100,18 +127,4 @@ ggplot(df, aes(x = Agents, y = Negatives)) +
 ggplot(df, aes(x = Agents, y = Links)) +
   geom_point() +
   theme_minimal()
-
-
-# Controling NetLogo from R: The first tries with RNetLogo ------------------------------
-
-nl.path = "c:/Program Files/NetLogo 6.2.2/app"
-nl.jarname = "netlogo-6.2.2.jar"
-NLStart(nl.path, nl.obj = "pokus", gui = FALSE, nl.jarname=nl.jarname)
-model.path = "d:/ownCloud2/!!!Complexity/!PublicOpinion/public_opinion_v01.nlogo"
-NLLoadModel(model.path, nl.obj = "pokus")
-NLCommand("setup")
-NLDoCommand(10, "go")
-burned <- NLReport("burned-trees")
-print(burned)
-NLQuit()
 
