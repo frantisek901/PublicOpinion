@@ -23,6 +23,7 @@ rm(list = ls())
 
 # Packages
 library(nlrx)
+library(RNetLogo)
 library(dplyr)
 library(tibble)
 library(ggplot2)
@@ -99,3 +100,18 @@ ggplot(df, aes(x = Agents, y = Negatives)) +
 ggplot(df, aes(x = Agents, y = Links)) +
   geom_point() +
   theme_minimal()
+
+
+# Controling NetLogo from R: The first tries with RNetLogo ------------------------------
+
+nl.path = "c:/Program Files/NetLogo 6.2.2/app"
+nl.jarname = "netlogo-6.2.2.jar"
+NLStart(nl.path, nl.obj = "pokus", gui = FALSE, nl.jarname=nl.jarname)
+model.path = "d:/ownCloud2/!!!Complexity/!PublicOpinion/public_opinion_v01.nlogo"
+NLLoadModel(model.path, nl.obj = "pokus")
+NLCommand("setup")
+NLDoCommand(10, "go")
+burned <- NLReport("burned-trees")
+print(burned)
+NLQuit()
+
