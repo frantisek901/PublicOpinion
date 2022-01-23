@@ -50,7 +50,7 @@ outpath = paste0(getwd(),"/OutputData")
 nl = nl(nlversion = "6.2.2",
         nlpath = netlogopath,
         modelpath = modelpath,
-        jvmmem = 3072)
+        jvmmem = 3072)  # NOTE: This reserves some memory, accomodate it according your computer.
 
 
 
