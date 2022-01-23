@@ -96,12 +96,78 @@ to setup
   ;	- However makes sense
   ; First we'll try using NetLogo's links, which are actually agents. This may end up a mess, but in THEORY it should make things easier.
 
+
+  ; !!!Elle: here is a method where links are set up first, then adjacency matrix is updated  
+  
+  ; 1. turtles create ties randomly
   ask turtles [
-    ; n-of size agentset
-    create-family-with n-of num-family-ties other turtles
-    create-coworkers-with n-of num-coworker-ties other turtles
-    create-friends-with n-of num-friend-ties other turtles
+    let family_list  ( [who] of n-of num-family-ties other turtles)        ; returns a list of the ids for each turtles "family" 
+    foreach family_list [                                                  ; looping through a list is unneccesary now, but will allow us to 
+      i -> create-family-member-with turtle i [ set weight 1 ]             ; easily generate different weights for each tie in the future
+    ]
+    let coworker_list ( [who] of n-of num-coworker-ties other turtles)
+    foreach coworker_list [                                                ; I really should turn this into a function...
+      i -> create-coworker-with turtle i [ set weight 1 ]              
+    ]
+    let friend_list ( [who] of n-of num-friend-ties other turtles)
+    foreach friend_list [
+      i -> create-friend-with turtle i [set weight 1 ] 
+    ] 
   ]
+  
+  ;2. matrices are initialised for storage 
+  set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties 
+  set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
+  set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
+  
+  ;3. matrices are filled with information from the links 
+  ; !!! Elle -  I would move this to a subprocedure (e.g., to fill_matrix) because we are going to use it again in go 
+  let list_turtles n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through 
+  foreach list_turtles [
+    i -> 
+    let me item 0 [who] of turtles with [who = i]               ; returns agent i's id #
+    foreach list_turtles [
+      j -> 
+      let you item 0 [who] of turtles with [who = j]            ; returns agent j's id # 
+      if i != j [                                               ; avoid error when turtles try to evaluate self  
+        nw:set-context turtles family
+        ask turtle me [
+          if family-member-neighbor? turtle you = true   [              ; if i and j are family 
+            let tie_strength [weight] of (family-member me you)         ; get the weight of the tie 
+            matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight 
+          ]
+         nw:set-context turtles coworkers 
+          ask turtle me [
+          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers 
+            let tie_strength [weight] of (coworker me you)              ; ... ... ... 
+            matrix:set coworker-ties-m me you tie_strength               
+            ]
+          ]
+          nw:set-context turtles friends 
+          ask turtle me [
+            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends     
+            let tie_strength [weight] of (friend me you)
+            matrix:set friend-ties-m me you tie_strength   
+            ]
+          ] 
+        ]          
+      ]
+    ]
+  ]
+  ; uncomment to confirm this ^ works 
+;  print matrix:pretty-print-text family-ties-m 
+;  print matrix:pretty-print-text coworker-ties-m
+;  print matrix:pretty-print-text friend-ties-m 
+  
+
+
+; !!! elle - following code is encapsulated in ^ 
+;  ask turtles [
+;    ; n-of size agentset
+;    create-family-with n-of num-family-ties other turtles
+;    create-coworkers-with n-of num-coworker-ties other turtles
+;    create-friends-with n-of num-friend-ties other turtles
+;  ]
 
   ask n-of 10 family [ set color yellow]
   ask n-of 10 coworkers [ set color green]
@@ -164,6 +230,9 @@ to setup
   ; TODO: create slider for this num-interactions
   set num-interactions 2
 
+  reset-ticks
+  ;; !!!FrK: Sorry for touching the code, but without this initialization I can't play with data pipeline.
+
 end
 
 ;## go (go is the standard name for the main action loop routine)
@@ -198,6 +267,9 @@ to go
   ;4. Output new ties matrix for writing to table/file, polarization stats.
   ;5. Check if ties matrix has changed, if not maybe we can stop.
   ;6. New tick (loop to beginning of go to do it all over again)
+
+  tick
+  ;; !!!FrK: Sorry for touching the code, but without this initialization I can't play with data pipeline.
 
 end
 @#$#@#$#@
@@ -267,7 +339,7 @@ BUTTON
 66
 go
 go
-NIL
+T
 1
 T
 OBSERVER
