@@ -326,7 +326,9 @@ to go
 
   ;4. Output new ties matrix for writing to table/file, polarization stats.
 
-  create-adj-matrices ; this is a function, should be above somewhere
+  if make-adj-matrices?  [
+    create-adj-matrices ; see function to create the adj matrices below
+  ]
 
   ;5. Check if ties matrices have changed, if not maybe we can stop.
   ; This is not necessary if we're only running the model for a limited number of ticks in behavior space.
@@ -453,7 +455,7 @@ number-of-agents
 number-of-agents
 20
 100
-20.0
+100.0
 1
 1
 NIL
