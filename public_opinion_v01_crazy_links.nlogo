@@ -69,7 +69,7 @@ to setup
     ;	- Each agent has an opinion. Value from -50 to 50, say.
     ;    set opinion -50
     ;    set opinion opinion + random 101
-    set opinion random 100
+    set opinion random 101
     ;; !!!FrK: Now the opinion is generated from 0 to 99,
     ;; !!!FrK: if we want -50 to +50 we need code 'set opinion -50 + random 101', since 'random 101' generates integers from 0 to 100.
     ;; !!!FrK: But because of color palette we need to stay on 0--100, se then 'set opinion random 101'.
@@ -107,6 +107,12 @@ to setup
     ; Stan: I am not sure having some very small probability of agents having no links is a problem?
     ; There are some people in the world who are very socially isolated, even without family connection, but it is rare.
     ; If a later version of the model has people meet new people once in a while (which it should, I think) it will be a feature not a bug.
+    ;; !!!FrK: Right! We have to be carefully of division by zero with these lone agents, and for the future devolopement it's a promising feature, when the rules allow create new links.
+    ;; !!!FrK: We have also carefully pick out interactions from existing links, since this code produces error: 'n-of 5 range 3',
+    ;; !!!FrK: which means that if we ask for more interactions in 'go' than agent has links, then we receive error.
+    ;; !!!FrK: No we ask constantly for 2 interactions, so turtles with 0 or 1 link only are real problem now.
+    ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
+    ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
 
   ]
 
@@ -124,9 +130,9 @@ to setup
     create-friends-with n-of num-friend-ties other turtles
   ]
 
-  ask n-of 10 family [ set color yellow]
-  ask n-of 10 coworkers [ set color green]
-  ask n-of 10 friends [ set color blue]
+  ;ask n-of 10 family [ set color yellow]
+  ;ask n-of 10 coworkers [ set color green]
+  ;ask n-of 10 friends [ set color blue]
   ;; !!!FrK: I don't understand this. This and the following code means that
   ;; !!!FrK: some links will color twice to the same color.
   ;; !!!FrK: I am very bad in coloring, this is may be some trick, so please explain,
@@ -176,14 +182,14 @@ end
 
 
 to create-adj-matrices
-  let list_turtles n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through
+  let list_turtles range number-of-agents ;n-values number-of-agents [i -> i] ; create an ordered list of turtles to loop through
 
   foreach list_turtles [
     i ->
-    let me item 0 [who] of turtles with [who = i]               ; returns agent i's id #
+    let me i ;item 0 [who] of turtles with [who = i]               ; returns agent i's id #
     foreach list_turtles [
       j ->
-      let you item 0 [who] of turtles with [who = j]            ; returns agent j's id #
+      let you j; item 0 [who] of turtles with [who = j]            ; returns agent j's id #
       if i != j [                                               ; avoid error when turtles try to evaluate self
         nw:set-context turtles family
         ask turtle me [
@@ -326,7 +332,9 @@ to go
 
   ;4. Output new ties matrix for writing to table/file, polarization stats.
 
-  create-adj-matrices ; this is a function, should be above somewhere
+  if make-adj-matrices?  [
+    create-adj-matrices ; see function to create the adj matrices below
+  ]
 
   ;5. Check if ties matrices have changed, if not maybe we can stop.
   ; This is not necessary if we're only running the model for a limited number of ticks in behavior space.
@@ -387,8 +395,7 @@ end
 ;  ; TODO: create slider for this num-interactions
 
 
-
-
+; show (list [(word "turtle:" who " " opinion)] of turtles )
 
 
 
@@ -485,7 +492,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-20.0
+15.0
 1
 1
 NIL
@@ -569,7 +576,7 @@ SWITCH
 148
 make-adj-matrices?
 make-adj-matrices?
-1
+0
 1
 -1000
 
@@ -920,21 +927,25 @@ NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="output test for the 3 ties-m matrices" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="output_test_3-ties-adj-matrices-and-opinions" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="1000"/>
+    <timeLimit steps="30"/>
     <metric>matrix:to-row-list family-ties-m</metric>
     <metric>matrix:to-row-list coworker-ties-m</metric>
     <metric>matrix:to-row-list friend-ties-m</metric>
+    <metric>(list [(word "turtle:" who " " opinion)] of turtles )</metric>
     <enumeratedValueSet variable="number-of-agents">
       <value value="20"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="agent-tolerance">
-      <value value="50"/>
+      <value value="15"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="transparency">
       <value value="90"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="make-adj-matrices?">
+      <value value="true"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
