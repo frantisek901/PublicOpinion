@@ -1,4 +1,5 @@
 #### Script for Project Group '#public-opinion-project' from SFI-CI Winter 2022
+##   (Adapted from the example from `nlrx` package help: ??"nlrx-package")
 ##
 ##   This script handles getting data from NetLogo model,
 ##   now named: public_opinion_v4pipeline.nlogo
@@ -13,9 +14,12 @@
 ##
 ##   B) Current state of data stored is even better -- whole experiment is stored in one object/file!
 ##
+##   C) Please consult help of `nlrx` package for further information and details here:
+??"nlrx-package"
+##
 
 ## Encoding: windows-1250
-## Last edit: 2022-01-23 Fran»esko
+## Last edit: 2022-01-24 Fran»esko
 ##
 
 
@@ -111,6 +115,11 @@ save(nl, file = "wholeExperiment.RData")
 
 
 
+##  Please consult help of `nlrx` package for further information and details on properties of `nl` object:
+??"nlrx-package"
+
+
+
 # Create object with network data and visualize them --------
 
 # One object for all network data pulled from 'nl':
@@ -145,7 +154,7 @@ ggplot(df, aes(x = Agents, y = Negatives)) +
   geom_point() +
   theme_minimal()
 
-ggplot(df, aes(x = Agents, y = Links)) +
+ggplot(df, aes(x = Agents, y = Links, col = Negatives, size = Negatives)) +
   geom_point() +
   theme_minimal()
 
