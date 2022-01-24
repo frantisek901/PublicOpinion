@@ -182,31 +182,31 @@ end
 
 
 to create-adj-matrices
-  let list_turtles range number-of-agents ;n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through
+  let list_turtles range number-of-agents ;n-values number-of-agents [i -> i] ; create an ordered list of turtles to loop through
 
   foreach list_turtles [
     i ->
     let me i ;item 0 [who] of turtles with [who = i]               ; returns agent i's id #
     foreach list_turtles [
       j ->
-      let you j ;item 0 [who] of turtles with [who = j]            ; returns agent j's id #
+      let you j; item 0 [who] of turtles with [who = j]            ; returns agent j's id #
       if i != j [                                               ; avoid error when turtles try to evaluate self
         nw:set-context turtles family
         ask turtle me [
-          if (family-member-neighbor? turtle you) [                     ; if i and j are family
+          if family-member-neighbor? turtle you = true   [              ; if i and j are family
             let tie_strength [weight] of (family-member me you)         ; get the weight of the tie
             matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight
           ]
          nw:set-context turtles coworkers
           ask turtle me [
-          if (coworker-neighbor? turtle you) [                          ; if i and j are coworkers
+          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers
             let tie_strength [weight] of (coworker me you)              ; ... ... ...
             matrix:set coworker-ties-m me you tie_strength
             ]
           ]
           nw:set-context turtles friends
           ask turtle me [
-            if (friend-neighbor? turtle you) [                          ; finally, if i and j are friends
+            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends
             let tie_strength [weight] of (friend me you)
             matrix:set friend-ties-m me you tie_strength
             ]
@@ -395,7 +395,7 @@ end
 ;  ; TODO: create slider for this num-interactions
 
 
-
+; show (list [(word "turtle:" who " " opinion)] of turtles )
 
 
 
@@ -492,7 +492,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-20.0
+15.0
 1
 1
 NIL
@@ -507,7 +507,7 @@ transparency
 transparency
 0
 255
-255.0
+90.0
 1
 1
 NIL
@@ -530,7 +530,7 @@ SWITCH
 112
 verbose?
 verbose?
-0
+1
 1
 -1000
 
@@ -927,21 +927,25 @@ NetLogo 6.2.2
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="output test for the 3 ties-m matrices" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="output_test_3-ties-adj-matrices-and-opinions" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="1000"/>
+    <timeLimit steps="30"/>
     <metric>matrix:to-row-list family-ties-m</metric>
     <metric>matrix:to-row-list coworker-ties-m</metric>
     <metric>matrix:to-row-list friend-ties-m</metric>
+    <metric>(list [(word "turtle:" who " " opinion)] of turtles )</metric>
     <enumeratedValueSet variable="number-of-agents">
       <value value="20"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="agent-tolerance">
-      <value value="50"/>
+      <value value="15"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="transparency">
       <value value="90"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="make-adj-matrices?">
+      <value value="true"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
