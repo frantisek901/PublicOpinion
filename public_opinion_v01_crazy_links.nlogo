@@ -69,7 +69,7 @@ to setup
     ;	- Each agent has an opinion. Value from -50 to 50, say.
     ;    set opinion -50
     ;    set opinion opinion + random 101
-    set opinion random 100
+    set opinion random 101
     ;; !!!FrK: Now the opinion is generated from 0 to 99,
     ;; !!!FrK: if we want -50 to +50 we need code 'set opinion -50 + random 101', since 'random 101' generates integers from 0 to 100.
     ;; !!!FrK: But because of color palette we need to stay on 0--100, se then 'set opinion random 101'.
@@ -107,6 +107,12 @@ to setup
     ; Stan: I am not sure having some very small probability of agents having no links is a problem?
     ; There are some people in the world who are very socially isolated, even without family connection, but it is rare.
     ; If a later version of the model has people meet new people once in a while (which it should, I think) it will be a feature not a bug.
+    ;; !!!FrK: Right! We have to be carefully of division by zero with these lone agents, and for the future devolopement it's a promising feature, when the rules allow create new links.
+    ;; !!!FrK: We have also carefully pick out interactions from existing links, since this code produces error: 'n-of 5 range 3',
+    ;; !!!FrK: which means that if we ask for more interactions in 'go' than agent has links, then we receive error.
+    ;; !!!FrK: No we ask constantly for 2 interactions, so turtles with 0 or 1 link only are real problem now.
+    ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
+    ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
 
   ]
 
@@ -124,9 +130,9 @@ to setup
     create-friends-with n-of num-friend-ties other turtles
   ]
 
-  ask n-of 10 family [ set color yellow]
-  ask n-of 10 coworkers [ set color green]
-  ask n-of 10 friends [ set color blue]
+  ;ask n-of 10 family [ set color yellow]
+  ;ask n-of 10 coworkers [ set color green]
+  ;ask n-of 10 friends [ set color blue]
   ;; !!!FrK: I don't understand this. This and the following code means that
   ;; !!!FrK: some links will color twice to the same color.
   ;; !!!FrK: I am very bad in coloring, this is may be some trick, so please explain,
@@ -176,31 +182,31 @@ end
 
 
 to create-adj-matrices
-  let list_turtles n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through
+  let list_turtles range number-of-agents ;n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through
 
   foreach list_turtles [
     i ->
-    let me item 0 [who] of turtles with [who = i]               ; returns agent i's id #
+    let me i ;item 0 [who] of turtles with [who = i]               ; returns agent i's id #
     foreach list_turtles [
       j ->
-      let you item 0 [who] of turtles with [who = j]            ; returns agent j's id #
+      let you j ;item 0 [who] of turtles with [who = j]            ; returns agent j's id #
       if i != j [                                               ; avoid error when turtles try to evaluate self
         nw:set-context turtles family
         ask turtle me [
-          if family-member-neighbor? turtle you = true   [              ; if i and j are family
+          if (family-member-neighbor? turtle you) [                     ; if i and j are family
             let tie_strength [weight] of (family-member me you)         ; get the weight of the tie
             matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight
           ]
          nw:set-context turtles coworkers
           ask turtle me [
-          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers
+          if (coworker-neighbor? turtle you) [                          ; if i and j are coworkers
             let tie_strength [weight] of (coworker me you)              ; ... ... ...
             matrix:set coworker-ties-m me you tie_strength
             ]
           ]
           nw:set-context turtles friends
           ask turtle me [
-            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends
+            if (friend-neighbor? turtle you) [                          ; finally, if i and j are friends
             let tie_strength [weight] of (friend me you)
             matrix:set friend-ties-m me you tie_strength
             ]
@@ -400,7 +406,6 @@ end
 
 
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -455,7 +460,7 @@ number-of-agents
 number-of-agents
 20
 100
-100.0
+20.0
 1
 1
 NIL
@@ -502,7 +507,7 @@ transparency
 transparency
 0
 255
-90.0
+255.0
 1
 1
 NIL
@@ -525,7 +530,7 @@ SWITCH
 112
 verbose?
 verbose?
-1
+0
 1
 -1000
 
@@ -571,7 +576,7 @@ SWITCH
 148
 make-adj-matrices?
 make-adj-matrices?
-1
+0
 1
 -1000
 
