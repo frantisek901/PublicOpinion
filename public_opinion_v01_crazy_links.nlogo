@@ -136,6 +136,18 @@ to setup
   ask coworkers [ set color green ]
   ask friends [ set color blue ]
 
+  ask links [ set weight 1 ]
+
+  ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
+  ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
+
+  ;4.1. matrices are initialised for storage
+  set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
+  set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
+  set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
+
+  ;4.2. matrices are filled with information from the links
+
   ; NETWORK VISUALIZATION
   ; make links a bit transparent. Taken from Uri Wilensky's copyright-waived transparency model
   ask links [
@@ -153,16 +165,17 @@ to setup
     [ set color lput transparency extract-rgb color ]
   ]
 
-  ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
-  ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
+  if make-adj-matrices?  [
+    create-adj-matrices ; see function to create the adj matrices below
+  ]
 
-  ;4.1. matrices are initialised for storage
-  set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
-  set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
-  set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
+  set num-interactions 2
+  reset-ticks
 
-  ;4.2. matrices are filled with information from the links
-  ; !!! Elle -  I would move this to a subprocedure (e.g., to fill_matrix) because we are going to use it again in go
+end
+
+
+to create-adj-matrices
   let list_turtles n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through
 
   foreach list_turtles [
@@ -197,14 +210,13 @@ to setup
     ]
   ]
   ; uncomment to confirm this ^ works
-;  print matrix:pretty-print-text family-ties-m
-;  print matrix:pretty-print-text coworker-ties-m
-;  print matrix:pretty-print-text friend-ties-m
-
-  set num-interactions 2
-  reset-ticks
+   ;print matrix:pretty-print-text family-ties-m
+   ;print matrix:pretty-print-text coworker-ties-m
+   ;print matrix:pretty-print-text friend-ties-m
+   ;print family-ties-m
 
 end
+
 
 ;## go (go is the standard name for the main action loop routine)
 ;One way to do this, as a place to start.
@@ -247,9 +259,7 @@ to go
     let upper opinion + tolerance
 
     ; we make a set of turtles who are at the end of the randomly chosen links
-    print my-interactions
     let my-interactors turtle-set [other-end] of my-interactions
-    print my-interactors
 
     ; FYI: (and this is given as "simple" by the documentation)
     ; "self" and "myself" are very different.
@@ -261,25 +271,16 @@ to go
       ; Check if within tolerance range, do something depending on that.
       ; The link is "smart" enough to know the other-end is NOT the turtle asking it, it's the other!
       ifelse lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper
-        [ print "within tolerance!"
-          type weight type " "
+        [ ; within tolerance
           set weight weight + .1 ; upweigh link
-          print weight
           ask myself [ ; here myself is the turtle
-            type opinion
             set opinion (opinion + [weight] of myself) ; here myself is the link. GENIUS!
-            print opinion
           ]
         ]
-        [
-        print "outside tolerance!"
-          type weight type " "
+        [ ; outside tolerance
           set weight weight - .1 ; downweigh link
-          print weight
           ask myself [
-            type opinion
             set opinion (opinion - [weight] of myself)
-            print opinion
           ]
         ]
     ]
@@ -325,6 +326,7 @@ to go
 
   ;4. Output new ties matrix for writing to table/file, polarization stats.
 
+  create-adj-matrices ; this is a function, should be above somewhere
 
   ;5. Check if ties matrices have changed, if not maybe we can stop.
   ; This is not necessary if we're only running the model for a limited number of ticks in behavior space.
@@ -337,6 +339,7 @@ to go
 
   ;6. New tick (loop to beginning of go to do it all over again)
   tick
+
 end
 
 
@@ -382,7 +385,6 @@ end
 ;  ; csv:to-file "test.csv" [(word [who] of both-ends " " breed)] of links
 ;
 ;  ; TODO: create slider for this num-interactions
-
 
 
 
@@ -451,7 +453,7 @@ number-of-agents
 number-of-agents
 20
 100
-50.0
+20.0
 1
 1
 NIL
@@ -559,6 +561,17 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+658
+115
+821
+148
+make-adj-matrices?
+make-adj-matrices?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
