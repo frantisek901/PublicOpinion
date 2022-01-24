@@ -3,15 +3,15 @@ extensions [ palette csv nw matrix ]
 ; Bad news: The NW extension is not particularly useful for us. "At the moment, nw:save-matrix does not support link weights.
 ; Every link is represented as a "1.00" in the connection matrix. This will change in a future version of the extension."
 
-globals [ num-agent
+globals [
+  num-agent
   num-interactions
   family-ties-m
   coworker-ties-m
   friend-ties-m
   interactions-family-m
-  interactions-coworker-m
-  interactions-friend-m
-
+  interactions-coworkers-m
+  interactions-friends-m
 ]
 
 turtles-own [
@@ -136,6 +136,7 @@ to setup
   ask coworkers [ set color green ]
   ask friends [ set color blue ]
 
+  ; NETWORK VISUALIZATION
   ; make links a bit transparent. Taken from Uri Wilensky's copyright-waived transparency model
   ask links [
     ;; since turtle colors might be either numbers (NetLogo colors) or lists
@@ -154,6 +155,51 @@ to setup
 
   ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
   ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
+
+  ;4.1. matrices are initialised for storage
+  set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
+  set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
+  set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
+
+  ;4.2. matrices are filled with information from the links
+  ; !!! Elle -  I would move this to a subprocedure (e.g., to fill_matrix) because we are going to use it again in go
+  let list_turtles n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through
+
+  foreach list_turtles [
+    i ->
+    let me item 0 [who] of turtles with [who = i]               ; returns agent i's id #
+    foreach list_turtles [
+      j ->
+      let you item 0 [who] of turtles with [who = j]            ; returns agent j's id #
+      if i != j [                                               ; avoid error when turtles try to evaluate self
+        nw:set-context turtles family
+        ask turtle me [
+          if family-member-neighbor? turtle you = true   [              ; if i and j are family
+            let tie_strength [weight] of (family-member me you)         ; get the weight of the tie
+            matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight
+          ]
+         nw:set-context turtles coworkers
+          ask turtle me [
+          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers
+            let tie_strength [weight] of (coworker me you)              ; ... ... ...
+            matrix:set coworker-ties-m me you tie_strength
+            ]
+          ]
+          nw:set-context turtles friends
+          ask turtle me [
+            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends
+            let tie_strength [weight] of (friend me you)
+            matrix:set friend-ties-m me you tie_strength
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+  ; uncomment to confirm this ^ works
+;  print matrix:pretty-print-text family-ties-m
+;  print matrix:pretty-print-text coworker-ties-m
+;  print matrix:pretty-print-text friend-ties-m
 
   set num-interactions 2
   reset-ticks
@@ -336,8 +382,6 @@ end
 ;  ; csv:to-file "test.csv" [(word [who] of both-ends " " breed)] of links
 ;
 ;  ; TODO: create slider for this num-interactions
-
-
 
 
 
