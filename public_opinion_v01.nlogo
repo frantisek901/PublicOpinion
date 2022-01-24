@@ -1,6 +1,12 @@
 extensions [ palette csv nw matrix ]
 
-globals [ num-agent num-interactions ]
+globals [
+  num-agent
+  num-interactions
+  family-ties-m
+  coworker-ties-m
+  friend-ties-m
+]
 
 turtles-own [
   opinion
@@ -67,9 +73,9 @@ to setup
 
     ;	- Each agent has family ties, coworker ties, and friend ties. This may be done a number of ways: agentsets, links, different link breeds, hypergraph etc. Not sure of the best way. This could also be done outside of agent generation, in a network setup routine.
 
-    set num-family-ties random 5
-    set num-coworker-ties random 10
-    set num-friend-ties random 10
+    set num-family-ties 1 + random 5
+    set num-coworker-ties 1 + random 10
+    set num-friend-ties 1 + random 10
     ;; !!!FrK: Be aware that this code might lead with probability 0.002 to situation that some agent will have no links,
     ;; !!!FrK: now it is not the serious problem since we test model with 20 turtles/agents, but on larger experiment runtime error will happen for sure.
     ;; !!!FrK: Problem is that code 'random 5' generates integers from 0 to 4, 'random 10' from 0 to 9.
@@ -97,71 +103,71 @@ to setup
   ; First we'll try using NetLogo's links, which are actually agents. This may end up a mess, but in THEORY it should make things easier.
 
 
-  ; !!!Elle: here is a method where links are set up first, then adjacency matrix is updated  
-  
+  ; !!!Elle: here is a method where links are set up first, then adjacency matrix is updated
+
   ; 1. turtles create ties randomly
   ask turtles [
-    let family_list  ( [who] of n-of num-family-ties other turtles)        ; returns a list of the ids for each turtles "family" 
-    foreach family_list [                                                  ; looping through a list is unneccesary now, but will allow us to 
+    let family_list  ( [who] of n-of num-family-ties other turtles)        ; returns a list of the ids for each turtles "family"
+    foreach family_list [                                                  ; looping through a list is unneccesary now, but will allow us to
       i -> create-family-member-with turtle i [ set weight 1 ]             ; easily generate different weights for each tie in the future
     ]
     let coworker_list ( [who] of n-of num-coworker-ties other turtles)
     foreach coworker_list [                                                ; I really should turn this into a function...
-      i -> create-coworker-with turtle i [ set weight 1 ]              
+      i -> create-coworker-with turtle i [ set weight 1 ]
     ]
     let friend_list ( [who] of n-of num-friend-ties other turtles)
     foreach friend_list [
-      i -> create-friend-with turtle i [set weight 1 ] 
-    ] 
+      i -> create-friend-with turtle i [set weight 1 ]
+    ]
   ]
-  
-  ;2. matrices are initialised for storage 
-  set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties 
+
+  ;2. matrices are initialised for storage
+  set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
   set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
   set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
-  
-  ;3. matrices are filled with information from the links 
-  ; !!! Elle -  I would move this to a subprocedure (e.g., to fill_matrix) because we are going to use it again in go 
-  let list_turtles n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through 
+
+  ;3. matrices are filled with information from the links
+  ; !!! Elle -  I would move this to a subprocedure (e.g., to fill_matrix) because we are going to use it again in go
+  let list_turtles n-values number-of-agents [i -> i]           ; create an ordered list of turtles to loop through
   foreach list_turtles [
-    i -> 
+    i ->
     let me item 0 [who] of turtles with [who = i]               ; returns agent i's id #
     foreach list_turtles [
-      j -> 
-      let you item 0 [who] of turtles with [who = j]            ; returns agent j's id # 
-      if i != j [                                               ; avoid error when turtles try to evaluate self  
+      j ->
+      let you item 0 [who] of turtles with [who = j]            ; returns agent j's id #
+      if i != j [                                               ; avoid error when turtles try to evaluate self
         nw:set-context turtles family
         ask turtle me [
-          if family-member-neighbor? turtle you = true   [              ; if i and j are family 
-            let tie_strength [weight] of (family-member me you)         ; get the weight of the tie 
-            matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight 
+          if family-member-neighbor? turtle you = true   [              ; if i and j are family
+            let tie_strength [weight] of (family-member me you)         ; get the weight of the tie
+            matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight
           ]
-         nw:set-context turtles coworkers 
+         nw:set-context turtles coworkers
           ask turtle me [
-          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers 
-            let tie_strength [weight] of (coworker me you)              ; ... ... ... 
-            matrix:set coworker-ties-m me you tie_strength               
+          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers
+            let tie_strength [weight] of (coworker me you)              ; ... ... ...
+            matrix:set coworker-ties-m me you tie_strength
             ]
           ]
-          nw:set-context turtles friends 
+          nw:set-context turtles friends
           ask turtle me [
-            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends     
+            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends
             let tie_strength [weight] of (friend me you)
-            matrix:set friend-ties-m me you tie_strength   
+            matrix:set friend-ties-m me you tie_strength
             ]
-          ] 
-        ]          
+          ]
+        ]
       ]
     ]
   ]
-  ; uncomment to confirm this ^ works 
-;  print matrix:pretty-print-text family-ties-m 
+  ; uncomment to confirm this ^ works
+;  print matrix:pretty-print-text family-ties-m
 ;  print matrix:pretty-print-text coworker-ties-m
-;  print matrix:pretty-print-text friend-ties-m 
-  
+;  print matrix:pretty-print-text friend-ties-m
 
 
-; !!! elle - following code is encapsulated in ^ 
+
+; !!! elle - following code is encapsulated in ^
 ;  ask turtles [
 ;    ; n-of size agentset
 ;    create-family-with n-of num-family-ties other turtles
@@ -254,8 +260,8 @@ to go
     ; I'm just using the variable from the setup right now, but turtles could have differing interaction numbers in the future
 
     set my-interactions n-of num-interactions my-links
-    print [ [(word breed " " who)] of other-end ] of my-interactions
-    print [ (word other-end) ] of my-interactions
+    ;print [ [(word breed " " who)] of other-end ] of my-interactions
+    ;print [ (word other-end) ] of my-interactions
 
 
   ]
