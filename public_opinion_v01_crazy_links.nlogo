@@ -3,6 +3,14 @@ extensions [ palette csv nw matrix ]
 ; Bad news: The NW extension is not particularly useful for us. "At the moment, nw:save-matrix does not support link weights.
 ; Every link is represented as a "1.00" in the connection matrix. This will change in a future version of the extension."
 
+; TODO:
+; DONE. 1.1 Make bounds on the opinions so they can't go beyond 0 or 100.
+; DONE. 1.2 Make bounds on the weights so they can't go beyond 0 or 1.
+; DONE. 2. Make opinion chooser that allows uniform or normal distribution (say, dev at 10).
+; 3. Create better network.
+; make a toggle switch setting for a) the basic every family 4, every workplace 20, and every friend group 10;
+; OR b) more distributional methods as best I can implement them in a first pass.
+
 globals [
   num-agent
   num-interactions
@@ -69,16 +77,15 @@ to setup
     ;	- Each agent has an opinion. Value from -50 to 50, say.
     ;    set opinion -50
     ;    set opinion opinion + random 101
-    set opinion random 101
-    ;; !!!FrK: Now the opinion is generated from 0 to 99,
-    ;; !!!FrK: if we want -50 to +50 we need code 'set opinion -50 + random 101', since 'random 101' generates integers from 0 to 100.
-    ;; !!!FrK: But because of color palette we need to stay on 0--100, se then 'set opinion random 101'.
-    ;; !!!FrK: I know how my comments my look like, in Czech we say these people 'hnidopich' which means 'flea hunter' :-),
-    ;; !!!FrK: BUT we easily might produce an artifact by this slight asymetry, in very ballanced scenario might big clusters happen
-    ;; !!!FrK: near the 0 since the symetrically oposite value taken for granted 100 would be missing.
-    ; Stan: Ah yes, good catch on the range not including the ending integer!
-    ; The opinion was set to 0 to 100 to be lazy for the first draft and show some coloring options.
-    ; We can really use whatever, and modifying the color and visualization code to match shouldn't be a problem.
+    if opinion-distribution = "normal" [
+      ; [mid dev mmin mmax] [50 10 0 100]
+      set opinion random-normal-in-bounds 50 10 0 100
+    ]
+
+    if opinion-distribution = "uniform" [
+      set opinion random 101
+    ]
+
     set color palette:scale-gradient [[ 255 0 0 ] [ 255 255 255 ] [0 0 255]] opinion 0 100
 
     ;	- Each agent has a tolerance for other opinions. Allowed distance of another agents' opinion, e.g. 20. This can be used for deciding on whether to strengthen or weaken a tie.
@@ -90,29 +97,6 @@ to setup
     set num-family-ties 1 + random 5
     set num-coworker-ties 1 + random 10
     set num-friend-ties 1 + random 10
-    ;; !!!FrK: Be aware that this code might lead with probability 0.002 to situation that some agent will have no links,
-    ;; !!!FrK: now it is not the serious problem since we test model with 20 turtles/agents, but on larger experiment runtime error will happen for sure.
-    ;; !!!FrK: Problem is that code 'random 5' generates integers from 0 to 4, 'random 10' from 0 to 9.
-    ;; !!!FrK: Solution might be code '1 + random 5' which generates random integers from 1 to 5, or
-    ;; !!!FrK: to check if every turle/agent has at least one link and in case it has no links,
-    ;; !!!FrK: then randomly choose which type of link we creates for this agent and then create this link.
-    ;; !!!FrK: We maight also decide that in case of 'family' we will go for '1 + random 5',
-    ;; !!!FrK: since we assume that every agent has to have at least one family relative,
-    ;; !!!FrK: and the rest of the code we let as it is, since we let agents have no job and no friends.
-    ;; !!!FrK: Last solution that comes to my mind is to parametrize the minima:
-    ;; !!!FrK: we create sliders 'min-family' 'min-coworker' 'min-frind' and the code we change to 'min-family + random 5' etc.,
-    ;; !!!FrK: but this probably also would lead to demand parametrize maxima,
-    ;; !!!FrK: so we will end up with something like 'min-family + random (max-family - min-family + 1)' and things would get more and more complicated...
-    ;; !!!FrK: And we would like to keep it simple, right? Yes, I'm not the right person for this sentence :-)
-    ; Stan: I am not sure having some very small probability of agents having no links is a problem?
-    ; There are some people in the world who are very socially isolated, even without family connection, but it is rare.
-    ; If a later version of the model has people meet new people once in a while (which it should, I think) it will be a feature not a bug.
-    ;; !!!FrK: Right! We have to be carefully of division by zero with these lone agents, and for the future devolopement it's a promising feature, when the rules allow create new links.
-    ;; !!!FrK: We have also carefully pick out interactions from existing links, since this code produces error: 'n-of 5 range 3',
-    ;; !!!FrK: which means that if we ask for more interactions in 'go' than agent has links, then we receive error.
-    ;; !!!FrK: No we ask constantly for 2 interactions, so turtles with 0 or 1 link only are real problem now.
-    ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
-    ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
 
   ]
 
@@ -130,18 +114,9 @@ to setup
     create-friends-with n-of num-friend-ties other turtles
   ]
 
-  ;ask n-of 10 family [ set color yellow]
-  ;ask n-of 10 coworkers [ set color green]
-  ;ask n-of 10 friends [ set color blue]
-  ;; !!!FrK: I don't understand this. This and the following code means that
-  ;; !!!FrK: some links will color twice to the same color.
-  ;; !!!FrK: I am very bad in coloring, this is may be some trick, so please explain,
-  ;; !!!FrK: what opportunity it gives us to color 'n-of 10' links twice.
-
   ask family [ set color yellow ]
   ask coworkers [ set color green ]
   ask friends [ set color blue ]
-
   ask links [ set weight 1 ]
 
   ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
@@ -258,77 +233,14 @@ to go
   ; We'll just be using the agent iterating through the links for now, since the link set is equiv to an adj matrix.
 
   ask turtles [
-    ; first, they need to set the lower and upper bounds on their opinion using the tolerance.
-    ; if lower < others-opinion <= upper than the others-opinion is within their tolerance
-
-    let lower opinion - tolerance
-    let upper opinion + tolerance
 
     ; we make a set of turtles who are at the end of the randomly chosen links
     let my-interactors turtle-set [other-end] of my-interactions
 
-    ; FYI: (and this is given as "simple" by the documentation)
-    ; "self" and "myself" are very different.
-    ; "self" means "me".
-    ; "myself" means "the turtle, patch or link who asked me to do what I'm doing right now."
+    ; we call the function that houses the decision rules
+    apply-decision-rule-to-interactions
 
-    ; THE FIRST DECISION RULE! Just some garbage to show how it's done. This decision rule makes no sense.
-    ask my-interactions [
-      ; Check if within tolerance range, do something depending on that.
-      ; The link is "smart" enough to know the other-end is NOT the turtle asking it, it's the other!
-      ifelse lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper
-        [ ; within tolerance
-          set weight weight + .1 ; upweigh link
-          ask myself [ ; here myself is the turtle
-            set opinion (opinion + [weight] of myself) ; here myself is the link. GENIUS!
-          ]
-        ]
-        [ ; outside tolerance
-          set weight weight - .1 ; downweigh link
-          ask myself [
-            set opinion (opinion - [weight] of myself)
-          ]
-        ]
-    ]
   ]
-
-    ;ask my-interactors [
-
-
-
-;    foreach n-of num-interactions
-;
-;    let recipients in-family-member-neighbors
-;    ask recipients [
-;        set opinion new-val + val-increment
-;        ask in-active-link-from myself [ set current-flow val-increment ]
-;      ]
-;  ]
-;
-;
-;      ask turtles [
-;    let recipients out-active-link-neighbors
-;    ifelse any? recipients [
-;      let val-to-keep val * (1 - diffusion-rate / 100)
-;      ; we keep some amount of our value from one turn to the next
-;      set new-val new-val + val-to-keep
-;      ; What we don't keep for ourselves, we divide evenly among our out-link-neighbors.
-;      let val-increment ((val - val-to-keep) / count recipients)
-;      ask recipients [
-;        set new-val new-val + val-increment
-;        ask in-active-link-from myself [ set current-flow val-increment ]
-;      ]
-;
-;
-;  let their-opinion sum [ similar-nearby ] of turtles
-;  let total-neighbors sum [ total-nearby ] of turtles
-;  set percent-unhappy (count turtles with [ not happy? ]) / (count turtles) * 100
-;
-;  ; The below doesn't calculate percent similar at all, that was old schelling code.
-;  ; It calcualtes the average distance between affiliation and neighbor affiliations.
-;  ;set percent-similar (poli-nearby / total-neighbors) * 100
-;  set percent-similar mean [abs (poli-aff - poli-nearby)] of turtles
-
 
   ;4. Output new ties matrix for writing to table/file, polarization stats.
 
@@ -343,7 +255,7 @@ to go
   ask links [ set thickness weight ]
 
   ; pointless turning so turtles do something visual each tick
-  ask turtles [ rt 45 ]
+  ask turtles [ rt 20 ]
 
   ;6. New tick (loop to beginning of go to do it all over again)
   tick
@@ -351,12 +263,64 @@ to go
 end
 
 
-; NOTES FROM TALKING WITH ELLE
+to apply-decision-rule-to-interactions
+    ; First, they need to set the lower and upper bounds on their opinion using the tolerance.
+    ; Later they will test if lower < others-opinion <= upper than the others-opinion is within their tolerance
+    let lower opinion - tolerance
+    let upper opinion + tolerance
 
-; We need only have behaviorspace output each ties matrix. We can do that with matrix:to-row-list matrix
-; We can use the agentsets / breeds of links as edge lists. They basically already are edge lists.
-; The links can be the one source of truth.
-; We can write an adj matrix from the link sets at the end of each tick, and that can be written out via behaviorspace.
+    ; FYI: (and this is given as "simple" by the documentation)
+    ; "self" and "myself" are very different.
+    ; "self" means "me".
+    ; "myself" means "the turtle, patch or link who asked me to do what I'm doing right now."
+
+    ; THE FIRST DECISION RULE! Just some garbage to show how it's done. This decision rule makes no sense.
+    ask my-interactions [
+      ; Check if within tolerance range, do something depending on that.
+      ; The link is "smart" enough to know the other-end is NOT the turtle asking it, it's the other!
+      ifelse lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper
+        [ ; within tolerance
+          set weight weight + .1 ; upweigh link
+          keep-weight-in-bounds
+          ask myself [ ; here myself is the turtle
+            set opinion (opinion + [weight] of myself) ; here myself is the link. GENIUS!
+            keep-opinion-in-bounds
+          ]
+        ]
+        [ ; outside tolerance
+          set weight weight - .1 ; downweigh link
+          keep-weight-in-bounds
+          ask myself [
+            set opinion (opinion - [weight] of myself)
+            keep-opinion-in-bounds
+          ]
+        ]
+
+    ]
+end
+
+to keep-opinion-in-bounds
+  if opinion < 0 [ set opinion 0 ]
+  if opinion > 100 [set opinion 100 ]
+end
+
+to keep-weight-in-bounds
+  if weight < 0 [ set weight 0 ]
+  if weight > 1 [ set weight 1 ]
+end
+
+
+
+; from https://stackoverflow.com/questions/20230685/netlogo-how-to-make-sure-a-variable-stays-in-a-defined-range
+
+to-report random-normal-in-bounds [mid dev mmin mmax]
+  let result random-normal mid dev
+  if result < mmin or result > mmax
+    [ report random-normal-in-bounds mid dev mmin mmax ]
+  report result
+end
+;observer> clear-plot set-plot-pen-interval 0.01 set-plot-x-range -0.1 1.1
+;observer> histogram n-values 1000000 [ random-normal-in-bounds 0.5 0.2 0 1 ]
 
 
 
@@ -398,8 +362,39 @@ end
 ; show (list [(word "turtle:" who " " opinion)] of turtles )
 
 
+    ;; !!!FrK: Now the opinion is generated from 0 to 99,
+    ;; !!!FrK: if we want -50 to +50 we need code 'set opinion -50 + random 101', since 'random 101' generates integers from 0 to 100.
+    ;; !!!FrK: But because of color palette we need to stay on 0--100, se then 'set opinion random 101'.
+    ;; !!!FrK: I know how my comments my look like, in Czech we say these people 'hnidopich' which means 'flea hunter' :-),
+    ;; !!!FrK: BUT we easily might produce an artifact by this slight asymetry, in very ballanced scenario might big clusters happen
+    ;; !!!FrK: near the 0 since the symetrically oposite value taken for granted 100 would be missing.
+    ; Stan: Ah yes, good catch on the range not including the ending integer!
+    ; The opinion was set to 0 to 100 to be lazy for the first draft and show some coloring options.
+    ; We can really use whatever, and modifying the color and visualization code to match shouldn't be a problem.
 
-
+    ;; !!!FrK: Be aware that this code might lead with probability 0.002 to situation that some agent will have no links,
+    ;; !!!FrK: now it is not the serious problem since we test model with 20 turtles/agents, but on larger experiment runtime error will happen for sure.
+    ;; !!!FrK: Problem is that code 'random 5' generates integers from 0 to 4, 'random 10' from 0 to 9.
+    ;; !!!FrK: Solution might be code '1 + random 5' which generates random integers from 1 to 5, or
+    ;; !!!FrK: to check if every turle/agent has at least one link and in case it has no links,
+    ;; !!!FrK: then randomly choose which type of link we creates for this agent and then create this link.
+    ;; !!!FrK: We maight also decide that in case of 'family' we will go for '1 + random 5',
+    ;; !!!FrK: since we assume that every agent has to have at least one family relative,
+    ;; !!!FrK: and the rest of the code we let as it is, since we let agents have no job and no friends.
+    ;; !!!FrK: Last solution that comes to my mind is to parametrize the minima:
+    ;; !!!FrK: we create sliders 'min-family' 'min-coworker' 'min-frind' and the code we change to 'min-family + random 5' etc.,
+    ;; !!!FrK: but this probably also would lead to demand parametrize maxima,
+    ;; !!!FrK: so we will end up with something like 'min-family + random (max-family - min-family + 1)' and things would get more and more complicated...
+    ;; !!!FrK: And we would like to keep it simple, right? Yes, I'm not the right person for this sentence :-)
+    ; Stan: I am not sure having some very small probability of agents having no links is a problem?
+    ; There are some people in the world who are very socially isolated, even without family connection, but it is rare.
+    ; If a later version of the model has people meet new people once in a while (which it should, I think) it will be a feature not a bug.
+    ;; !!!FrK: Right! We have to be carefully of division by zero with these lone agents, and for the future devolopement it's a promising feature, when the rules allow create new links.
+    ;; !!!FrK: We have also carefully pick out interactions from existing links, since this code produces error: 'n-of 5 range 3',
+    ;; !!!FrK: which means that if we ask for more interactions in 'go' than agent has links, then we receive error.
+    ;; !!!FrK: No we ask constantly for 2 interactions, so turtles with 0 or 1 link only are real problem now.
+    ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
+    ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
 
 
 
@@ -579,6 +574,16 @@ make-adj-matrices?
 0
 1
 -1000
+
+CHOOSER
+21
+144
+159
+189
+opinion-distribution
+opinion-distribution
+"uniform" "normal"
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
