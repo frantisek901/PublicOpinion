@@ -4,12 +4,11 @@ extensions [ palette csv nw matrix ]
 ; Every link is represented as a "1.00" in the connection matrix. This will change in a future version of the extension."
 
 ; TODO:
-; DONE. 1.1 Make bounds on the opinions so they can't go beyond 0 or 100.
-; DONE. 1.2 Make bounds on the weights so they can't go beyond 0 or 1.
-; DONE. 2. Make opinion chooser that allows uniform or normal distribution (say, dev at 10).
-; 3. Create better network.
+; 3. Create better network:
 ; make a toggle switch setting for a) the basic every family 4, every workplace 20, and every friend group 10;
 ; OR b) more distributional methods as best I can implement them in a first pass.
+; 4. Links should really be named with ties, e.g. not family but family-ties, to be clearer about what's up
+; 5. Have a chooser for network display since a circle makes groups hard to visualize
 
 globals [
   num-agent
@@ -33,6 +32,10 @@ turtles-own [
   num-coworker-ties
   num-friend-ties
   my-interactions
+  my-group      ;; a number representing the group this turtle is a member of, or -1 if this
+  my-fam-group  ;; turtle is not in a group.
+  my-work-group
+  my-friend-group
 ]
 
 links-own [ weight ]
@@ -107,17 +110,17 @@ to setup
   ;	- However makes sense
   ; First we'll try using NetLogo's links, which are actually agents. This may end up a mess, but in THEORY it should make things easier.
 
-  ask turtles [
-    ; n-of size agentset
-    create-family-with n-of num-family-ties other turtles
-    create-coworkers-with n-of num-coworker-ties other turtles
-    create-friends-with n-of num-friend-ties other turtles
-  ]
+  generate-the-network
 
   ask family [ set color yellow ]
   ask coworkers [ set color green ]
   ask friends [ set color blue ]
   ask links [ set weight 1 ]
+
+  ; for testing
+  ;ask family [ hide-link ]
+  ;ask coworkers [ hide-link ]
+  ;ask friends [ hide-link ]
 
   ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
   ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
@@ -251,17 +254,100 @@ to go
   ;5. Check if ties matrices have changed, if not maybe we can stop.
   ; This is not necessary if we're only running the model for a limited number of ticks in behavior space.
 
+
+  ; VISUALIZATION UPDATING
+
   ; redraw links for thickness according to weight
   ask links [ set thickness weight ]
 
   ; pointless turning so turtles do something visual each tick
   ask turtles [ rt 20 ]
 
+  ; layout using other than the circle
+  ; layout-spring turtles family 0.2 10 1
+
   ;6. New tick (loop to beginning of go to do it all over again)
   tick
 
 end
 
+to generate-the-network
+  ; We'll use Uri Wilkensky's public domain Grouping Turtles Example code, modified, to help us.
+
+  if network-groups-sizes = "fam4 work20 friend10" [
+    let fam-size 4
+    let work-size 20
+    let friend-size 10
+
+    assign-by-size fam-size
+    ask turtles [
+      set my-fam-group my-group
+      create-family-with other turtles with [ my-fam-group = [my-fam-group] of self ]
+      ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged.
+      if random 100 < 10 [
+        create-family-member-with one-of ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] )
+      ]
+    ]
+
+    assign-by-size work-size
+    ask turtles [
+      set my-work-group my-group
+      create-coworkers-with other turtles with [ my-work-group = [my-work-group] of self ]
+      ask my-links [ if random 100 < 10 [ die ] ] ; 10% chance of being estranged or not knowing each other.
+      if random 100 < 10 [
+        create-coworker-with one-of ((other turtles) with [ my-work-group != [my-work-group] of myself ] )
+      ]
+    ]
+
+    assign-by-size friend-size
+    ask turtles [
+      set my-friend-group my-group
+      create-friends-with other turtles with [ my-friend-group = [my-friend-group] of self ]
+      ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged or not knowing a friend of friends.
+      if random 100 < 10 [
+        create-friend-with one-of ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] )
+      ]
+    ]
+
+  ]
+
+  if network-groups-sizes = "size drawn from dists" [
+    print "Sorry, the 'size drawn from dists' option has not been finished yet!"
+
+  ]
+
+  if network-groups-sizes = "random" [
+    ; n-of size agentset
+    ask turtles [
+      create-family-with n-of num-family-ties other turtles
+      create-coworkers-with n-of num-coworker-ties other turtles
+      create-friends-with n-of num-friend-ties other turtles
+    ]
+  ]
+
+end
+
+to assign-by-size [ group-size ]
+
+  ;; all turtles are initially ungrouped
+  ask turtles [ set my-group -1 ]
+  let unassigned turtles
+
+  ;; start with group 0 and loop to build each group
+  let current 0
+  while [any? unassigned]
+  [
+    ;; place a randomly chosen set of group-size turtles into the current
+    ;; group. or, if there are less than group-size turtles left, place the
+    ;; rest of the turtles in the current group.
+    ask n-of (min (list group-size (count unassigned))) unassigned
+      [ set my-group current ]
+    ;; consider the next group.
+    set current current + 1
+    ;; remove grouped turtles from the pool of turtles to assign
+    set unassigned unassigned with [my-group = -1]
+  ]
+end
 
 to apply-decision-rule-to-interactions
     ; First, they need to set the lower and upper bounds on their opinion using the tolerance.
@@ -278,6 +364,7 @@ to apply-decision-rule-to-interactions
     ask my-interactions [
       ; Check if within tolerance range, do something depending on that.
       ; The link is "smart" enough to know the other-end is NOT the turtle asking it, it's the other!
+
       ifelse lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper
         [ ; within tolerance
           set weight weight + .1 ; upweigh link
@@ -308,8 +395,6 @@ to keep-weight-in-bounds
   if weight < 0 [ set weight 0 ]
   if weight > 1 [ set weight 1 ]
 end
-
-
 
 ; from https://stackoverflow.com/questions/20230685/netlogo-how-to-make-sure-a-variable-stays-in-a-defined-range
 
@@ -583,6 +668,16 @@ CHOOSER
 opinion-distribution
 opinion-distribution
 "uniform" "normal"
+0
+
+CHOOSER
+22
+193
+192
+238
+network-groups-sizes
+network-groups-sizes
+"fam4 work20 friend10" "size drawn from dists" "random"
 0
 
 @#$#@#$#@
