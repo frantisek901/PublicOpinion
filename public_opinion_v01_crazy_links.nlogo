@@ -4,9 +4,6 @@ extensions [ palette csv nw matrix ]
 ; Every link is represented as a "1.00" in the connection matrix. This will change in a future version of the extension."
 
 ; TODO:
-; 3. Create better network:
-; make a toggle switch setting for a) the basic every family 4, every workplace 20, and every friend group 10;
-; OR b) more distributional methods as best I can implement them in a first pass.
 ; 4. Links should really be named with ties, e.g. not family but family-ties, to be clearer about what's up
 ; 5. Have a chooser for network display since a circle makes groups hard to visualize
 
@@ -285,7 +282,9 @@ to generate-the-network
       create-family-with other turtles with [ my-fam-group = [my-fam-group] of self ]
       ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged.
       if random 100 < 10 [
-        create-family-member-with one-of ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] )
+        if 0 < count ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] ) [
+          create-family-member-with one-of ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] )
+        ]
       ]
     ]
 
@@ -295,7 +294,9 @@ to generate-the-network
       create-coworkers-with other turtles with [ my-work-group = [my-work-group] of self ]
       ask my-links [ if random 100 < 10 [ die ] ] ; 10% chance of being estranged or not knowing each other.
       if random 100 < 10 [
-        create-coworker-with one-of ((other turtles) with [ my-work-group != [my-work-group] of myself ] )
+        if 0 < count ((other turtles) with [ my-work-group != [my-work-group] of myself ] ) [
+          create-coworkers-with one-of ((other turtles) with [ my-work-group != [my-work-group] of myself ] )
+        ]
       ]
     ]
 
@@ -305,7 +306,9 @@ to generate-the-network
       create-friends-with other turtles with [ my-friend-group = [my-friend-group] of self ]
       ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged or not knowing a friend of friends.
       if random 100 < 10 [
-        create-friend-with one-of ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] )
+          if 0 < count ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] ) [
+            create-friend-with one-of ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] )
+          ]
       ]
     ]
 
@@ -480,7 +483,6 @@ end
     ;; !!!FrK: No we ask constantly for 2 interactions, so turtles with 0 or 1 link only are real problem now.
     ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
     ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
-
 
 
 
