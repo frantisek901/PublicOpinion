@@ -28,3 +28,16 @@ names = ['run', 'n_agents', 'tolerance', 'transparency', 'adj_or_not',
          'step', 'fam_adj', 'work_adj', 'friend_adj', 'opinions']
 
 df = pd.read_csv(fname, sep=',', skiprows=7, names=names)
+
+def extract_matrix(string):
+    '''
+    This function obtains an adjacency matrix from the string output given by
+    NetLogo.
+    '''
+    aux = string.replace('[','')
+    aux = aux.replace(']','')
+    ar1d = np.fromstring(aux, dtype=int,sep=' ')
+    dim = int(np.sqrt(len(ar1d)))
+    ar2d = np.reshape(ar1d, (dim, dim))
+    return ar2d
+
