@@ -25,10 +25,12 @@ globals [
 turtles-own [
   opinion
   tolerance
-  family-size
-  family-ties
-  coworker-ties
-  friend-ties
+  family_id
+  workplace_id
+  friend_group_id
+;  family-ties
+;  coworker-ties
+;  friend-ties
   num-family-ties
   num-coworker-ties
   num-friend-ties
@@ -58,6 +60,7 @@ undirected-link-breed [friends friend]
 ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
 
 to setup
+
   clear-all
 
   ;1. Get global variables or setup variables from interface.
@@ -107,12 +110,14 @@ to setup
   ;	- However makes sense
   ; First we'll try using NetLogo's links, which are actually agents. This may end up a mess, but in THEORY it should make things easier.
 
-  ask turtles [
-    ; n-of size agentset
-    create-family-with n-of num-family-ties other turtles
-    create-coworkers-with n-of num-coworker-ties other turtles
-    create-friends-with n-of num-friend-ties other turtles
-  ]
+;  ask turtles [
+;    ; n-of size agentset
+;    create-family-with n-of num-family-ties other turtles
+;    create-coworkers-with n-of num-coworker-ties other turtles
+;    create-friends-with n-of num-friend-ties other turtles
+;  ]
+
+  generate_clustered_networks            ; using sub-procedure to generate somewhat clustered networks (scroll down)
 
   ask family [ set color yellow ]
   ask coworkers [ set color green ]
@@ -149,6 +154,7 @@ to setup
   if make-adj-matrices?  [
     create-adj-matrices ; see function to create the adj matrices below
   ]
+
 
   set num-interactions 2
   reset-ticks
@@ -321,6 +327,54 @@ end
 ;observer> histogram n-values 1000000 [ random-normal-in-bounds 0.5 0.2 0 1 ]
 
 
+
+
+
+to generate_clustered_networks               ; this is a dumb first pass at generating clustered networks, not for use in final sims.
+
+  ; families
+  let n_families round (number-of-agents / 4)                  ; ~ 4 agents per family
+  ask turtles [
+    set family_id item (who mod n_families) range n_families   ; assign each agent to a family
+  ]
+ ask turtles [
+    create-family-with other turtles with [family_id = [family_id] of myself]    ; create ties to all family members
+  ]
+
+  ; workplaces
+  let n_workplaces 1 + random (number-of-agents / 2)               ; randomly generate number of workplaces
+  ask turtles [
+    set workplace_id item (who mod n_workplaces) range n_workplaces   ; assign each agent to a work place (this might throw an error...)
+  ]
+  ask turtles [
+    let fellow_workers [who] of other turtles with [workplace_id = [workplace_id] of myself]   ; get list of potential workmates
+    foreach fellow_workers [
+      i ->
+      if random-float 1.01 < .8 [            ; 80% chance of having tie to each agent in same work place
+        create-coworker-with turtle i
+      ]
+    ]
+  ]
+
+  ; friends
+  let n_friend_groups round (number-of-agents / 8)    ; start with assumption that friendship groups have ~ 8 people in them...
+  ask turtles [
+    set friend_group_id item (who mod n_friend_groups) range n_friend_groups
+  ]
+  ask turtles [
+    let main_gang [who] of other turtles with [friend_group_id = [ friend_group_id] of myself]
+    foreach main_gang [
+      i ->
+      ifelse random-float 1.01 < .8 [              ; .8 prob that ties is made to each member of main gang
+        create-friend-with turtle i
+      ] [
+        create-friend-with one-of turtles with [friend_group_id != [friend_group_id] of myself]   ; otherwise made randomly to another agent outside of main gang
+      ]
+    ]
+  ]
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Elle's suggested CODE DUMP !!!
 
