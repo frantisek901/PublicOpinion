@@ -157,33 +157,31 @@ end
 
 
 to create-adj-matrices
-  let list_turtles range number-of-agents ;n-values number-of-agents [i -> i] ; create an ordered list of turtles to loop through
+  let list_turtles range number-of-agents ; create an ordered list of turtles to loop through
 
   foreach list_turtles [
     i ->
-    let me i ;item 0 [who] of turtles with [who = i]               ; returns agent i's id #
     foreach list_turtles [
       j ->
-      let you j; item 0 [who] of turtles with [who = j]            ; returns agent j's id #
       if i != j [                                               ; avoid error when turtles try to evaluate self
         nw:set-context turtles family
-        ask turtle me [
-          if family-member-neighbor? turtle you = true   [              ; if i and j are family
-            let tie_strength [weight] of (family-member me you)         ; get the weight of the tie
-            matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight
+        ask turtle i [
+          if family-member-neighbor? turtle j = true   [              ; if i and j are family
+            let tie_strength [weight] of (family-member i j)          ; get the weight of the tie
+            matrix:set family-ties-m i j tie_strength                ; update relevant cell in family-ties-m with weight
           ]
          nw:set-context turtles coworkers
-          ask turtle me [
-          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers
-            let tie_strength [weight] of (coworker me you)              ; ... ... ...
-            matrix:set coworker-ties-m me you tie_strength
+          ask turtle i [
+          if coworker-neighbor? turtle j = true   [                   ; if i and j are coworkers
+            let tie_strength [weight] of (coworker i j)               ; ... ... ...
+            matrix:set coworker-ties-m i j tie_strength
             ]
           ]
           nw:set-context turtles friends
-          ask turtle me [
-            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends
-            let tie_strength [weight] of (friend me you)
-            matrix:set friend-ties-m me you tie_strength
+          ask turtle i [
+            if friend-neighbor? turtle j = true   [                   ; finally, if i and j are friends
+            let tie_strength [weight] of (friend i j)
+            matrix:set friend-ties-m i j tie_strength
             ]
           ]
         ]
