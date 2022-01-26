@@ -208,68 +208,6 @@ to generate_clustered_networks               ; this is a dumb first pass at gene
   ]
 end
 
-;to generate-the-network
-;  ; We'll use Uri Wilkensky's public domain Grouping Turtles Example code, modified, to help us.
-;
-;  if network-groups-sizes = "fam4 work20 friend10" [
-;    let fam-size 4
-;    let work-size 20
-;    let friend-size 10
-;
-;    assign-by-size fam-size
-;    ask turtles [
-;      set my-fam-group my-group
-;      create-family-with other turtles with [ my-fam-group = [my-fam-group] of self ]
-;      ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged.
-;      if random 100 < 10 [
-;        if 0 < count ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] ) [
-;          create-family-member-with one-of ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] )
-;        ]
-;      ]
-;    ]
-;
-;    assign-by-size work-size
-;    ask turtles [
-;      set my-work-group my-group
-;      create-coworkers-with other turtles with [ my-work-group = [my-work-group] of self ]
-;      ask my-links [ if random 100 < 10 [ die ] ] ; 10% chance of being estranged or not knowing each other.
-;      if random 100 < 10 [
-;        if 0 < count ((other turtles) with [ my-work-group != [my-work-group] of myself ] ) [
-;          create-coworkers-with one-of ((other turtles) with [ my-work-group != [my-work-group] of myself ] )
-;        ]
-;      ]
-;    ]
-;
-;    assign-by-size friend-size
-;    ask turtles [
-;      set my-friend-group my-group
-;      create-friends-with other turtles with [ my-friend-group = [my-friend-group] of self ]
-;      ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged or not knowing a friend of friends.
-;      if random 100 < 10 [
-;          if 0 < count ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] ) [
-;            create-friend-with one-of ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] )
-;          ]
-;      ]
-;    ]
-;
-;  ]
-;
-;  if network-groups-sizes = "size drawn from dists" [
-;    print "Sorry, the 'size drawn from dists' option has not been finished yet!"
-;
-;  ]
-;
-;  if network-groups-sizes = "random" [
-;    ; n-of size agentset
-;    ask turtles [
-;      create-family-with n-of num-family-ties other turtles
-;      create-coworkers-with n-of num-coworker-ties other turtles
-;      create-friends-with n-of num-friend-ties other turtles
-;    ]
-;  ]
-;
-;end
-
 to create-adj-matrices
   let list_turtles range number-of-agents ; create an ordered list of turtles to loop through
   foreach list_turtles [
@@ -511,6 +449,71 @@ end
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Unused procedure for network generation
+
+;to generate-the-network
+;  ; We'll use Uri Wilkensky's public domain Grouping Turtles Example code, modified, to help us.
+;
+;  if network-groups-sizes = "fam4 work20 friend10" [
+;    let fam-size 4
+;    let work-size 20
+;    let friend-size 10
+;
+;    assign-by-size fam-size
+;    ask turtles [
+;      set my-fam-group my-group
+;      create-family-with other turtles with [ my-fam-group = [my-fam-group] of self ]
+;      ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged.
+;      if random 100 < 10 [
+;        if 0 < count ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] ) [
+;          create-family-member-with one-of ((other turtles) with [ my-fam-group != [my-fam-group] of myself ] )
+;        ]
+;      ]
+;    ]
+;
+;    assign-by-size work-size
+;    ask turtles [
+;      set my-work-group my-group
+;      create-coworkers-with other turtles with [ my-work-group = [my-work-group] of self ]
+;      ask my-links [ if random 100 < 10 [ die ] ] ; 10% chance of being estranged or not knowing each other.
+;      if random 100 < 10 [
+;        if 0 < count ((other turtles) with [ my-work-group != [my-work-group] of myself ] ) [
+;          create-coworkers-with one-of ((other turtles) with [ my-work-group != [my-work-group] of myself ] )
+;        ]
+;      ]
+;    ]
+;
+;    assign-by-size friend-size
+;    ask turtles [
+;      set my-friend-group my-group
+;      create-friends-with other turtles with [ my-friend-group = [my-friend-group] of self ]
+;      ask my-links [ if random 100 < 5 [ die ] ] ; 5% chance of being estranged or not knowing a friend of friends.
+;      if random 100 < 10 [
+;          if 0 < count ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] ) [
+;            create-friend-with one-of ((other turtles) with [ my-friend-group != [my-friend-group] of myself ] )
+;          ]
+;      ]
+;    ]
+;
+;  ]
+;
+;  if network-groups-sizes = "size drawn from dists" [
+;    print "Sorry, the 'size drawn from dists' option has not been finished yet!"
+;
+;  ]
+;
+;  if network-groups-sizes = "random" [
+;    ; n-of size agentset
+;    ask turtles [
+;      create-family-with n-of num-family-ties other turtles
+;      create-coworkers-with n-of num-coworker-ties other turtles
+;      create-friends-with n-of num-friend-ties other turtles
+;    ]
+;  ]
+;
+;end
 
 
 
@@ -601,7 +604,6 @@ end
     ;; !!!FrK: No we ask constantly for 2 interactions, so turtles with 0 or 1 link only are real problem now.
     ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
     ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
-
 
 
 @#$#@#$#@
