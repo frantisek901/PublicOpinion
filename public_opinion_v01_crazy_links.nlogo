@@ -7,7 +7,7 @@ extensions [ palette csv nw matrix ]
 ; DONE. 1.1 Make bounds on the opinions so they can't go beyond 0 or 100.
 ; DONE. 1.2 Make bounds on the weights so they can't go beyond 0 or 1.
 ; DONE. 2. Make opinion chooser that allows uniform or normal distribution (say, dev at 10).
-; 3. Create better network.
+; DONE. 3. Create better network.
 ; make a toggle switch setting for a) the basic every family 4, every workplace 20, and every friend group 10;
 ; OR b) more distributional methods as best I can implement them in a first pass.
 
@@ -28,9 +28,6 @@ turtles-own [
   family_id
   workplace_id
   friend_group_id
-;  family-ties
-;  coworker-ties
-;  friend-ties
   num-family-ties
   num-coworker-ties
   num-friend-ties
@@ -39,9 +36,12 @@ turtles-own [
 
 links-own [ weight ]
 
-undirected-link-breed [family family-member]
-undirected-link-breed [coworkers coworker]
-undirected-link-breed [friends friend]
+directed-link-breed [family family-member]     ; because we are using weights, these need to be directed
+directed-link-breed [coworkers coworker]
+directed-link-breed [friends friend]
+
+
+; SETUP ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 ; OVERVIEW. This text is repeated again below, a snippet at a time, to match it to the code.
 
@@ -58,6 +58,7 @@ undirected-link-breed [friends friend]
 ;3. Generate initial network
 ;	- However makes sense
 ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
+
 
 to setup
 
@@ -95,37 +96,22 @@ to setup
 
     set tolerance agent-tolerance
 
-    ;	- Each agent has family ties, coworker ties, and friend ties. This may be done a number of ways: agentsets, links, different link breeds, hypergraph etc. Not sure of the best way. This could also be done outside of agent generation, in a network setup routine.
-
-    set num-family-ties 1 + random 5
-    set num-coworker-ties 1 + random 10
-    set num-friend-ties 1 + random 10
-
   ]
 
   ; put them in a circle with radius value
   layout-circle turtles 12
 
   ;3. Generate initial network
-  ;	- However makes sense
   ; First we'll try using NetLogo's links, which are actually agents. This may end up a mess, but in THEORY it should make things easier.
-
-;  ask turtles [
-;    ; n-of size agentset
-;    create-family-with n-of num-family-ties other turtles
-;    create-coworkers-with n-of num-coworker-ties other turtles
-;    create-friends-with n-of num-friend-ties other turtles
-;  ]
 
   generate_clustered_networks            ; using sub-procedure to generate somewhat clustered networks (scroll down)
 
   ask family [ set color yellow ]
   ask coworkers [ set color green ]
   ask friends [ set color blue ]
-  ask links [ set weight 1 ]
+  ; ask links [ set weight 1 ]           ; at present, weights are set to .5 when links are created ^
 
   ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
-  ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
 
   ;4.1. matrices are initialised for storage
   set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
@@ -133,6 +119,9 @@ to setup
   set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
 
   ;4.2. matrices are filled with information from the links
+  if make-adj-matrices?  [
+    create-adj-matrices ; see function to create the adj matrices below
+  ]
 
   ; NETWORK VISUALIZATION
   ; make links a bit transparent. Taken from Uri Wilensky's copyright-waived transparency model
@@ -151,20 +140,58 @@ to setup
     [ set color lput transparency extract-rgb color ]
   ]
 
-  if make-adj-matrices?  [
-    create-adj-matrices ; see function to create the adj matrices below
-  ]
-
-
   set num-interactions 2
   reset-ticks
 
 end
 
+to generate_clustered_networks               ; this is a dumb first pass at generating clustered networks, not for use in final sims.
+
+  ; families
+  let n_families round (number-of-agents / 4)                  ; ~ 4 agents per family
+  ask turtles [
+    set family_id item (who mod n_families) range n_families   ; assign each agent to a family
+  ]
+ ask turtles [
+    create-family-to other turtles with [family_id = [family_id] of myself]  [ set weight .5 ]   ; create ties to all family members
+  ]
+
+  ; workplaces
+  let n_workplaces 1 + random (number-of-agents / 2)               ; randomly generate number of workplaces
+  ask turtles [
+    set workplace_id item (who mod n_workplaces) range n_workplaces   ; assign each agent to a work place
+  ]
+  ask turtles [
+    let fellow_workers [who] of other turtles with [workplace_id = [workplace_id] of myself]   ; get list of potential workmates
+    foreach fellow_workers [
+      i ->
+      if random-float 1.01 < .8 [            ; 80% chance of having tie to each agent in same work place
+        create-coworker-to turtle i [ set weight .5 ]
+      ]
+    ]
+  ]
+
+  ; friends
+  let n_friend_groups round (number-of-agents / 8)    ; start with assumption that friendship groups have ~ 8 people in them...
+  ask turtles [
+    set friend_group_id item (who mod n_friend_groups) range n_friend_groups
+  ]
+  ask turtles [
+    let main_gang [who] of other turtles with [friend_group_id = [ friend_group_id] of myself]
+    foreach main_gang [
+      i ->
+      ifelse random-float 1.01 < .8 [              ; .8 prob that ties is made to each member of main gang
+        create-friend-to turtle i [ set weight .5 ]
+      ] [
+        create-friend-to one-of turtles with [friend_group_id != [friend_group_id] of myself]
+        [ set weight .5 ]   ; otherwise made randomly to another agent outside of main gang
+      ]
+    ]
+  ]
+end
 
 to create-adj-matrices
   let list_turtles range number-of-agents ; create an ordered list of turtles to loop through
-
   foreach list_turtles [
     i ->
     foreach list_turtles [
@@ -203,6 +230,9 @@ to create-adj-matrices
 end
 
 
+; SCHEDULE ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+
+
 ;## go (go is the standard name for the main action loop routine)
 ;One way to do this, as a place to start.
 ;1. Each agent chooses (default random, build in moral circle / parochial prefs here) some agents in its network to interact with, writes those choices to a current-tick all-agents-interactions adjacency matrix (interaction matrix, for short). (Btw a tick is Netlogo term for one loop through the go routine.)
@@ -221,7 +251,7 @@ to go
   ask turtles [
     ; I'm just using the num-interactions variable from the setup right now, but turtles could have differing interaction numbers in the future
 
-    set my-interactions n-of num-interactions my-links
+    set my-interactions n-of num-interactions my-links         ; 2 interactions per tick, selected from all possible networks
 
     if verbose? [
       print [ [(word breed " " who)] of other-end ] of my-interactions
@@ -278,6 +308,8 @@ to apply-decision-rule-to-interactions
     ; "self" means "me".
     ; "myself" means "the turtle, patch or link who asked me to do what I'm doing right now."
 
+
+  if decision_rule = "trial_run" [
     ; THE FIRST DECISION RULE! Just some garbage to show how it's done. This decision rule makes no sense.
     ask my-interactions [
       ; Check if within tolerance range, do something depending on that.
@@ -299,8 +331,21 @@ to apply-decision-rule-to-interactions
             keep-opinion-in-bounds
           ]
         ]
-
     ]
+  ]
+
+  if decision_rule = "weighdiff_sigweight" [
+    ; first pass at decision rule discussed by group on 25th of Jan, by Elle
+    ask my-interactions [
+      ; let weight_tie
+      ifelse lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper [
+
+      ] [
+      ]
+    ]
+  ]
+
+
 end
 
 to keep-opinion-in-bounds
@@ -330,53 +375,24 @@ end
 
 
 
-to generate_clustered_networks               ; this is a dumb first pass at generating clustered networks, not for use in final sims.
 
-  ; families
-  let n_families round (number-of-agents / 4)                  ; ~ 4 agents per family
-  ask turtles [
-    set family_id item (who mod n_families) range n_families   ; assign each agent to a family
-  ]
- ask turtles [
-    create-family-with other turtles with [family_id = [family_id] of myself]    ; create ties to all family members
-  ]
-
-  ; workplaces
-  let n_workplaces 1 + random (number-of-agents / 2)               ; randomly generate number of workplaces
-  ask turtles [
-    set workplace_id item (who mod n_workplaces) range n_workplaces   ; assign each agent to a work place (this might throw an error...)
-  ]
-  ask turtles [
-    let fellow_workers [who] of other turtles with [workplace_id = [workplace_id] of myself]   ; get list of potential workmates
-    foreach fellow_workers [
-      i ->
-      if random-float 1.01 < .8 [            ; 80% chance of having tie to each agent in same work place
-        create-coworker-with turtle i
-      ]
-    ]
-  ]
-
-  ; friends
-  let n_friend_groups round (number-of-agents / 8)    ; start with assumption that friendship groups have ~ 8 people in them...
-  ask turtles [
-    set friend_group_id item (who mod n_friend_groups) range n_friend_groups
-  ]
-  ask turtles [
-    let main_gang [who] of other turtles with [friend_group_id = [ friend_group_id] of myself]
-    foreach main_gang [
-      i ->
-      ifelse random-float 1.01 < .8 [              ; .8 prob that ties is made to each member of main gang
-        create-friend-with turtle i
-      ] [
-        create-friend-with one-of turtles with [friend_group_id != [friend_group_id] of myself]   ; otherwise made randomly to another agent outside of main gang
-      ]
-    ]
-  ]
-end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Elle's suggested CODE DUMP !!!
+
+    ;	- Each agent has family ties, coworker ties, and friend ties. This may be done a number of ways: agentsets, links, different link breeds, hypergraph etc. Not sure of the best way. This could also be done outside of agent generation, in a network setup routine.
+    ; ELLE - this is now achieved by the generate_clustered_networks procedure, but with much less variability
+;    set num-family-ties 1 + random 5
+;    set num-coworker-ties 1 + random 10
+;    set num-friend-ties 1 + random 10
+
+;  ask turtles [
+;    ; n-of size agentset
+;    create-family-with n-of num-family-ties other turtles
+;    create-coworkers-with n-of num-coworker-ties other turtles
+;    create-friends-with n-of num-friend-ties other turtles
+;  ]
 
 ;  ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
 ;  ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
@@ -553,7 +569,7 @@ transparency
 transparency
 0
 255
-90.0
+255.0
 1
 1
 NIL
@@ -635,6 +651,26 @@ opinion-distribution
 opinion-distribution
 "uniform" "normal"
 0
+
+CHOOSER
+921
+28
+1127
+73
+decision_rule
+decision_rule
+"trial_run" "weighdiff_sigweight"
+0
+
+TEXTBOX
+923
+10
+1073
+28
+Decision rule in play
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
