@@ -6,6 +6,12 @@ extensions [ palette csv nw matrix ]
 ; TODO:
 ; 4. Links should really be named with ties, e.g. not family but family-ties, to be clearer about what's up
 ; 5. Have a chooser for network display since a circle makes groups hard to visualize
+; DONE. 1.1 Make bounds on the opinions so they can't go beyond 0 or 100.
+; DONE. 1.2 Make bounds on the weights so they can't go beyond 0 or 1.
+; DONE. 2. Make opinion chooser that allows uniform or normal distribution (say, dev at 10).
+; DONE. 3. Create better network.
+; make a toggle switch setting for a) the basic every family 4, every workplace 20, and every friend group 10;
+; OR b) more distributional methods as best I can implement them in a first pass.
 
 globals [
   num-agent
@@ -21,10 +27,9 @@ globals [
 turtles-own [
   opinion
   tolerance
-  family-size
-  family-ties
-  coworker-ties
-  friend-ties
+  family_id
+  workplace_id
+  friend_group_id
   num-family-ties
   num-coworker-ties
   num-friend-ties
@@ -33,13 +38,17 @@ turtles-own [
   my-fam-group  ;; turtle is not in a group.
   my-work-group
   my-friend-group
+  my-interactors
 ]
 
 links-own [ weight ]
 
-undirected-link-breed [family family-member]
-undirected-link-breed [coworkers coworker]
-undirected-link-breed [friends friend]
+directed-link-breed [family family-member]     ; because we are using weights, these need to be directed
+directed-link-breed [coworkers coworker]
+directed-link-breed [friends friend]
+
+
+; SETUP ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 ; OVERVIEW. This text is repeated again below, a snippet at a time, to match it to the code.
 
@@ -57,7 +66,9 @@ undirected-link-breed [friends friend]
 ;	- However makes sense
 ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
 
+
 to setup
+
   clear-all
 
   ;1. Get global variables or setup variables from interface.
@@ -92,27 +103,22 @@ to setup
 
     set tolerance agent-tolerance
 
-    ;	- Each agent has family ties, coworker ties, and friend ties. This may be done a number of ways: agentsets, links, different link breeds, hypergraph etc. Not sure of the best way. This could also be done outside of agent generation, in a network setup routine.
-
-    set num-family-ties 1 + random 5
-    set num-coworker-ties 1 + random 10
-    set num-friend-ties 1 + random 10
-
   ]
 
   ; put them in a circle with radius value
   layout-circle turtles 12
 
   ;3. Generate initial network
-  ;	- However makes sense
   ; First we'll try using NetLogo's links, which are actually agents. This may end up a mess, but in THEORY it should make things easier.
 
-  generate-the-network
+  ; generate-the-network ; Stan version
+
+  generate_clustered_networks            ; Elle version. using sub-procedure to generate somewhat clustered networks (scroll down)
 
   ask family [ set color yellow ]
   ask coworkers [ set color green ]
   ask friends [ set color blue ]
-  ask links [ set weight 1 ]
+  ; ask links [ set weight 1 ]           ; at present, weights are set to .5 when links are created ^
 
   ; for testing
   ;ask family [ hide-link ]
@@ -120,7 +126,6 @@ to setup
   ;ask friends [ hide-link ]
 
   ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
-  ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
 
   ;4.1. matrices are initialised for storage
   set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
@@ -128,6 +133,9 @@ to setup
   set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
 
   ;4.2. matrices are filled with information from the links
+  if make-adj-matrices?  [
+    create-adj-matrices ; see function to create the adj matrices below
+  ]
 
   ; NETWORK VISUALIZATION
   ; make links a bit transparent. Taken from Uri Wilensky's copyright-waived transparency model
@@ -146,44 +154,81 @@ to setup
     [ set color lput transparency extract-rgb color ]
   ]
 
-  if make-adj-matrices?  [
-    create-adj-matrices ; see function to create the adj matrices below
-  ]
-
   set num-interactions 2
   reset-ticks
 
 end
 
+to generate_clustered_networks               ; this is a dumb first pass at generating clustered networks, not for use in final sims.
+
+  ; families
+  let n_families round (number-of-agents / 4)                  ; ~ 4 agents per family
+  ask turtles [
+    set family_id item (who mod n_families) range n_families   ; assign each agent to a family
+  ]
+ ask turtles [
+    create-family-to other turtles with [family_id = [family_id] of myself]  [ set weight .5 ]   ; create ties to all family members
+  ]
+
+  ; workplaces
+  let n_workplaces 1 + random (number-of-agents / 2)               ; randomly generate number of workplaces
+  ask turtles [
+    set workplace_id item (who mod n_workplaces) range n_workplaces   ; assign each agent to a work place
+  ]
+  ask turtles [
+    let fellow_workers [who] of other turtles with [workplace_id = [workplace_id] of myself]   ; get list of potential workmates
+    foreach fellow_workers [
+      i ->
+      if random-float 1.01 < .8 [            ; 80% chance of having tie to each agent in same work place
+        create-coworker-to turtle i [ set weight .5 ]
+      ]
+    ]
+  ]
+
+  ; friends
+  let n_friend_groups round (number-of-agents / 8)    ; start with assumption that friendship groups have ~ 8 people in them...
+  ask turtles [
+    set friend_group_id item (who mod n_friend_groups) range n_friend_groups
+  ]
+  ask turtles [
+    let main_gang [who] of other turtles with [friend_group_id = [ friend_group_id] of myself]
+    foreach main_gang [
+      i ->
+      ifelse random-float 1.01 < .8 [              ; .8 prob that ties is made to each member of main gang
+        create-friend-to turtle i [ set weight .5 ]
+      ] [
+        create-friend-to one-of turtles with [friend_group_id != [friend_group_id] of myself]
+        [ set weight .5 ]   ; otherwise made randomly to another agent outside of main gang
+      ]
+    ]
+  ]
+end
 
 to create-adj-matrices
-  let list_turtles range number-of-agents ;n-values number-of-agents [i -> i] ; create an ordered list of turtles to loop through
-
+  let list_turtles range number-of-agents ; create an ordered list of turtles to loop through
   foreach list_turtles [
     i ->
-    let me i ;item 0 [who] of turtles with [who = i]               ; returns agent i's id #
     foreach list_turtles [
       j ->
-      let you j; item 0 [who] of turtles with [who = j]            ; returns agent j's id #
       if i != j [                                               ; avoid error when turtles try to evaluate self
         nw:set-context turtles family
-        ask turtle me [
-          if family-member-neighbor? turtle you = true   [              ; if i and j are family
-            let tie_strength [weight] of (family-member me you)         ; get the weight of the tie
-            matrix:set family-ties-m me you tie_strength                ; update relevant cell in family-ties-m with weight
+        ask turtle i [
+          if out-family-member-neighbor? turtle j = true   [          ; if i and j are family
+            let tie_strength [weight] of (family-member i j)          ; get the weight of the tie
+            matrix:set family-ties-m i j tie_strength                 ; update relevant cell in family-ties-m with weight
           ]
          nw:set-context turtles coworkers
-          ask turtle me [
-          if coworker-neighbor? turtle you = true   [                   ; if i and j are coworkers
-            let tie_strength [weight] of (coworker me you)              ; ... ... ...
-            matrix:set coworker-ties-m me you tie_strength
+          ask turtle i [
+          if out-coworker-neighbor? turtle j = true   [               ; if i and j are coworkers
+            let tie_strength [weight] of (coworker i j)               ; ... ... ...
+            matrix:set coworker-ties-m i j tie_strength
             ]
           ]
           nw:set-context turtles friends
-          ask turtle me [
-            if friend-neighbor? turtle you = true   [                   ; finally, if i and j are friends
-            let tie_strength [weight] of (friend me you)
-            matrix:set friend-ties-m me you tie_strength
+          ask turtle i [
+            if out-friend-neighbor? turtle j = true   [               ; finally, if i and j are friends
+            let tie_strength [weight] of (friend i j)
+            matrix:set friend-ties-m i j tie_strength
             ]
           ]
         ]
@@ -197,6 +242,9 @@ to create-adj-matrices
    ;print family-ties-m
 
 end
+
+
+; SCHEDULE ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 
 ;## go (go is the standard name for the main action loop routine)
@@ -217,7 +265,11 @@ to go
   ask turtles [
     ; I'm just using the num-interactions variable from the setup right now, but turtles could have differing interaction numbers in the future
 
-    set my-interactions n-of num-interactions my-links
+    ifelse  count my-links > num-interactions [
+      set my-interactions n-of num-interactions my-links      ; 2 interactions per tick, selected from all possible networks
+    ] [
+      set my-interactions my-links                            ; avoid run time error if agents don't have enough partners
+    ]
 
     if verbose? [
       print [ [(word breed " " who)] of other-end ] of my-interactions
@@ -235,7 +287,7 @@ to go
   ask turtles [
 
     ; we make a set of turtles who are at the end of the randomly chosen links
-    let my-interactors turtle-set [other-end] of my-interactions
+    set my-interactors turtle-set [other-end] of my-interactions
 
     ; we call the function that houses the decision rules
     apply-decision-rule-to-interactions
@@ -363,6 +415,8 @@ to apply-decision-rule-to-interactions
     ; "self" means "me".
     ; "myself" means "the turtle, patch or link who asked me to do what I'm doing right now."
 
+
+  if decision_rule = "trial_run" [
     ; THE FIRST DECISION RULE! Just some garbage to show how it's done. This decision rule makes no sense.
     ask my-interactions [
       ; Check if within tolerance range, do something depending on that.
@@ -385,8 +439,43 @@ to apply-decision-rule-to-interactions
             keep-opinion-in-bounds
           ]
         ]
-
     ]
+  ]
+
+  if decision_rule = "weighdiff_sigweight" [
+    ; first pass at decision rule discussed by group on 25th of Jan, by Elle
+    let i [who] of self
+;    print word " I am" i
+;    print word "my tolerance zone is" lower
+;    print word " to " upper
+    ask my-interactions [                ; haha, someone make this method less shit (please)
+      ask turtle i [
+        let j [who] of other-end
+;        print word "my partner is" j
+        let weight_ij [weight] of myself
+;        print word "weight of link: " weight_ij
+;        print word "their opinon is " [opinion] of other-end
+        if lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper [    ; i updates their opinion if j's opinion falls within their tolerance envelope
+;          print "in bounds!"
+;          print word "my original opinion was: " opinion
+          set opinion (opinion + (weight_ij * ( [opinion] of other-end - opinion)))
+;          print word "and after updating, it is: " opinion
+        ]
+        let diff  abs ( [opinion] of other-end - opinion )
+        ifelse  diff < 2 * tolerance  [     ; as long as i thinks j's opinion is not too extreme (i.e., it's < 2* their tolerance level)
+          ask myself [
+            set weight sigmoid diff / 100
+          ]
+        ] [
+          ask myself [                    ; when i thinks j is extreme,
+            set weight 0                  ; they cut the i -> j tie  by setting the weight = 0
+            die                           ; AND asking the link to die
+          ]
+          ; next step is to get agent i to make another tie here (I need to sleep, so not now)
+        ]
+      ]
+    ]
+  ]
 end
 
 to keep-opinion-in-bounds
@@ -397,6 +486,10 @@ end
 to keep-weight-in-bounds
   if weight < 0 [ set weight 0 ]
   if weight > 1 [ set weight 1 ]
+end
+
+to-report sigmoid [ x ]                          ; sigmoid function
+   report (1 / (1 + exp (8 * ( x - .5))) )       ; smaller values of x (i.e., differences between agents' opinions) produce higher values (i.e., of new weights)                                                      ;
 end
 
 ; from https://stackoverflow.com/questions/20230685/netlogo-how-to-make-sure-a-variable-stays-in-a-defined-range
@@ -412,7 +505,26 @@ end
 
 
 
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; Elle's suggested CODE DUMP !!!
+
+    ;	- Each agent has family ties, coworker ties, and friend ties. This may be done a number of ways: agentsets, links, different link breeds, hypergraph etc. Not sure of the best way. This could also be done outside of agent generation, in a network setup routine.
+    ; ELLE - this is now achieved by the generate_clustered_networks procedure, but with much less variability
+;    set num-family-ties 1 + random 5
+;    set num-coworker-ties 1 + random 10
+;    set num-friend-ties 1 + random 10
+
+;  ask turtles [
+;    ; n-of size agentset
+;    create-family-with n-of num-family-ties other turtles
+;    create-coworkers-with n-of num-coworker-ties other turtles
+;    create-friends-with n-of num-friend-ties other turtles
+;  ]
 
 ;  ;4. Report initial network of ties (ties matrix) for output. This would be an adjacency matrix where each tie has a weight from 0 to 1.
 ;  ;   HOWEVER, right now I'm just trying to get an edge list, which can be made into an adj matrix.
@@ -589,7 +701,7 @@ transparency
 transparency
 0
 255
-90.0
+255.0
 1
 1
 NIL
@@ -681,6 +793,24 @@ network-groups-sizes
 network-groups-sizes
 "fam4 work20 friend10" "size drawn from dists" "random"
 0
+921
+28
+1127
+73
+decision_rule
+decision_rule
+"trial_run" "weighdiff_sigweight"
+1
+
+TEXTBOX
+923
+10
+1073
+28
+Decision rule in play
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
