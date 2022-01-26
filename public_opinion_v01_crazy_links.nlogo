@@ -468,9 +468,9 @@ to apply-decision-rule-to-interactions
 ;          print word "and after updating, it is: " opinion
         ]
         let diff  abs ( [opinion] of other-end - opinion )
-        ifelse  diff < 2 * tolerance  [     ; as long as i thinks j's opinion is not too extreme (i.e., it's < 2* their tolerance level)
+        ifelse diff < 2 * tolerance  [     ; as long as i thinks j's opinion is not too extreme (i.e., it's < 2* their tolerance level)
           ask myself [
-            set weight sigmoid diff / 100
+            set weight sigmoid (diff / 100)
           ]
         ] [
           ask myself [                    ; when i thinks j is extreme,
@@ -604,7 +604,6 @@ end
 
 
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -659,7 +658,7 @@ number-of-agents
 number-of-agents
 20
 100
-20.0
+100.0
 1
 1
 NIL
@@ -691,7 +690,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-15.0
+50.0
 1
 1
 NIL
@@ -775,7 +774,7 @@ SWITCH
 148
 make-adj-matrices?
 make-adj-matrices?
-0
+1
 1
 -1000
 
