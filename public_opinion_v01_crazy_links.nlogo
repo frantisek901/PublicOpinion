@@ -94,7 +94,7 @@ to setup
     ;    set opinion opinion + random 101
     if opinion-distribution = "normal" [
       ; [mid dev mmin mmax] [50 10 0 100]
-      set opinion random-normal-in-bounds 50 10 0 100
+      set opinion random-normal-in-bounds 50 20 0 100
     ]
 
     if opinion-distribution = "uniform" [
@@ -788,7 +788,7 @@ CHOOSER
 opinion-distribution
 opinion-distribution
 "uniform" "normal"
-0
+1
 
 CHOOSER
 22
@@ -819,6 +819,24 @@ Decision rule in play
 11
 0.0
 1
+
+PLOT
+918
+183
+1118
+333
+Histogram of opinions
+NIL
+NIL
+0.0
+100.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 5.0 1 -16777216 true "" "histogram [opinion] of turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
