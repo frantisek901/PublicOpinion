@@ -32,6 +32,7 @@ turtles-own [
   num-coworker-ties
   num-friend-ties
   my-interactions
+  my-interactors
 ]
 
 links-own [ weight ]
@@ -199,20 +200,20 @@ to create-adj-matrices
       if i != j [                                               ; avoid error when turtles try to evaluate self
         nw:set-context turtles family
         ask turtle i [
-          if family-member-neighbor? turtle j = true   [              ; if i and j are family
+          if out-family-member-neighbor? turtle j = true   [          ; if i and j are family
             let tie_strength [weight] of (family-member i j)          ; get the weight of the tie
-            matrix:set family-ties-m i j tie_strength                ; update relevant cell in family-ties-m with weight
+            matrix:set family-ties-m i j tie_strength                 ; update relevant cell in family-ties-m with weight
           ]
          nw:set-context turtles coworkers
           ask turtle i [
-          if coworker-neighbor? turtle j = true   [                   ; if i and j are coworkers
+          if out-coworker-neighbor? turtle j = true   [               ; if i and j are coworkers
             let tie_strength [weight] of (coworker i j)               ; ... ... ...
             matrix:set coworker-ties-m i j tie_strength
             ]
           ]
           nw:set-context turtles friends
           ask turtle i [
-            if friend-neighbor? turtle j = true   [                   ; finally, if i and j are friends
+            if out-friend-neighbor? turtle j = true   [               ; finally, if i and j are friends
             let tie_strength [weight] of (friend i j)
             matrix:set friend-ties-m i j tie_strength
             ]
@@ -251,7 +252,11 @@ to go
   ask turtles [
     ; I'm just using the num-interactions variable from the setup right now, but turtles could have differing interaction numbers in the future
 
-    set my-interactions n-of num-interactions my-links         ; 2 interactions per tick, selected from all possible networks
+    ifelse  count my-links > num-interactions [
+      set my-interactions n-of num-interactions my-links      ; 2 interactions per tick, selected from all possible networks
+    ] [
+      set my-interactions my-links                            ; avoid run time error if agents don't have enough partners
+    ]
 
     if verbose? [
       print [ [(word breed " " who)] of other-end ] of my-interactions
@@ -269,7 +274,7 @@ to go
   ask turtles [
 
     ; we make a set of turtles who are at the end of the randomly chosen links
-    let my-interactors turtle-set [other-end] of my-interactions
+    set my-interactors turtle-set [other-end] of my-interactions
 
     ; we call the function that houses the decision rules
     apply-decision-rule-to-interactions
@@ -336,16 +341,38 @@ to apply-decision-rule-to-interactions
 
   if decision_rule = "weighdiff_sigweight" [
     ; first pass at decision rule discussed by group on 25th of Jan, by Elle
-    ask my-interactions [
-      ; let weight_tie
-      ifelse lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper [
-
-      ] [
+    let i [who] of self
+;    print word " I am" i
+;    print word "my tolerance zone is" lower
+;    print word " to " upper
+    ask my-interactions [                ; haha, someone make this method less shit (please)
+      ask turtle i [
+        let j [who] of other-end
+;        print word "my partner is" j
+        let weight_ij [weight] of myself
+;        print word "weight of link: " weight_ij
+;        print word "their opinon is " [opinion] of other-end
+        if lower < ([opinion] of other-end) and ([opinion] of other-end) <= upper [    ; i updates their opinion if j's opinion falls within their tolerance envelope
+;          print "in bounds!"
+;          print word "my original opinion was: " opinion
+          set opinion (opinion + (weight_ij * ( [opinion] of other-end - opinion)))
+;          print word "and after updating, it is: " opinion
+        ]
+        let diff  abs ( [opinion] of other-end - opinion )
+        ifelse  diff < 2 * tolerance  [     ; as long as i thinks j's opinion is not too extreme (i.e., it's < 2* their tolerance level)
+          ask myself [
+            set weight sigmoid diff / 100
+          ]
+        ] [
+          ask myself [                    ; when i thinks j is extreme,
+            set weight 0                  ; they cut the i -> j tie  by setting the weight = 0
+            die                           ; AND asking the link to die
+          ]
+          ; next step is to get agent i to make another tie here (I need to sleep, so not now)
+        ]
       ]
     ]
   ]
-
-
 end
 
 to keep-opinion-in-bounds
@@ -358,7 +385,9 @@ to keep-weight-in-bounds
   if weight > 1 [ set weight 1 ]
 end
 
-
+to-report sigmoid [ x ]                          ; sigmoid function
+   report (1 / (1 + exp (8 * ( x - .5))) )       ; smaller values of x (i.e., differences between agents' opinions) produce higher values (i.e., of new weights)                                                      ;
+end
 
 ; from https://stackoverflow.com/questions/20230685/netlogo-how-to-make-sure-a-variable-stays-in-a-defined-range
 
@@ -660,7 +689,7 @@ CHOOSER
 decision_rule
 decision_rule
 "trial_run" "weighdiff_sigweight"
-0
+1
 
 TEXTBOX
 923
