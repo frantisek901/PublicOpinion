@@ -75,6 +75,8 @@ to setup
 
   clear-all
 
+  if random-seed? [random-seed RS]
+
   ;1. Get global variables or setup variables from interface.
   ;	- Default tolerance value (e.g. 20).
   ;	- Default opinion split (e.g. 50%).
@@ -94,7 +96,7 @@ to setup
     ;    set opinion opinion + random 101
     if opinion-distribution = "normal" [
       ; [mid dev mmin mmax] [50 10 0 100]
-      set opinion random-normal-in-bounds 50 20 0 100
+      set opinion random-normal-in-bounds 50 15 0 100
     ]
 
     if opinion-distribution = "uniform" [
@@ -692,7 +694,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-50.0
+30.0
 1
 1
 NIL
@@ -707,7 +709,7 @@ transparency
 transparency
 0
 255
-255.0
+60.0
 1
 1
 NIL
@@ -798,7 +800,7 @@ CHOOSER
 network-groups-sizes
 network-groups-sizes
 "fam4 work20 friend10" "size drawn from dists" "random"
-0
+1
 
 CHOOSER
 921
@@ -829,14 +831,46 @@ Histogram of opinions
 NIL
 NIL
 0.0
-100.0
+110.0
 0.0
 10.0
 true
 false
 "" ""
 PENS
-"default" 5.0 1 -16777216 true "" "histogram [opinion] of turtles"
+"default" 10.0 1 -16777216 true "" "histogram [opinion] of turtles"
+
+INPUTBOX
+1177
+29
+1230
+89
+RS
+10.0
+1
+0
+Number
+
+SWITCH
+1237
+29
+1371
+62
+random-seed?
+random-seed?
+0
+1
+-1000
+
+TEXTBOX
+1178
+13
+1406
+41
+Controlling the value of random seed
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
