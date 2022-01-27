@@ -214,11 +214,7 @@ end
 
 
 to rewrite-adj-matrices
-  ;show family-ties-m
-  ;show friend-ties-m
-  ;show coworker-ties-m
-
-  ; We need to erase matrix every tick...
+; We need to erase matrix every tick...
   set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
   set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
   set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
@@ -253,9 +249,9 @@ to rewrite-adj-matrices
     ;show job-neis
   ]
 
-  ;show family-ties-m
-  ;show friend-ties-m
-  ;show coworker-ties-m
+;  show family-ties-m
+;  show friend-ties-m
+;  show coworker-ties-m
 end
 
 
@@ -722,7 +718,7 @@ number-of-agents
 number-of-agents
 20
 100
-100.0
+20.0
 1
 1
 NIL
