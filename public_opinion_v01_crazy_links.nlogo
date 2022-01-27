@@ -1,4 +1,4 @@
-extensions [ palette csv nw matrix ]
+extensions [ palette csv nw matrix]
 
 ; Bad news: The NW extension is not particularly useful for us. "At the moment, nw:save-matrix does not support link weights.
 ; Every link is represented as a "1.00" in the connection matrix. This will change in a future version of the extension."
@@ -144,6 +144,11 @@ to setup
     create-adj-matrices ; see function to create the adj matrices below
   ]
 
+  if another-adj-matrices? [
+    crt-adj-matrices
+  ]
+
+
   ; NETWORK VISUALIZATION
   ; make links a bit transparent. Taken from Uri Wilensky's copyright-waived transparency model
   ask links [
@@ -248,6 +253,46 @@ to create-adj-matrices
    ;print matrix:pretty-print-text friend-ties-m
    ;print family-ties-m
 
+end
+
+to crt-adj-matrices
+  ;show family-ties-m
+  ;show friend-ties-m
+  ;show coworker-ties-m
+
+  nw:set-context turtles family
+  ask turtles [
+    ; Creates list of 'who' of targets of out-links
+    let fam-neis sort [who] of out-family-member-neighbors
+    let i who
+    ; writing weights into the matrices
+    foreach fam-neis [j -> matrix:set family-ties-m i j [weight] of family-member i j]
+    show fam-neis
+  ]
+
+  nw:set-context turtles friends
+  ask turtles [
+    ; Creates list of 'who' of targets of out-links
+    let frn-neis sort [who] of out-friend-neighbors
+    let i who
+    ; writing weights into the matrices
+    foreach frn-neis [j -> matrix:set friend-ties-m i j [weight] of friend i j]
+    show frn-neis
+  ]
+
+  nw:set-context turtles coworkers
+  ask turtles [
+    ; Creates list of 'who' of targets of out-links
+    let job-neis sort [who] of out-coworker-neighbors
+    let i who
+    ; writing weights into the matrices
+    foreach job-neis [j -> matrix:set coworker-ties-m i j [weight] of coworker i j]
+    show job-neis
+  ]
+
+  ;show family-ties-m
+  ;show friend-ties-m
+  ;show coworker-ties-m
 end
 
 
@@ -890,6 +935,17 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot mean [weight] of links"
+
+SWITCH
+853
+124
+1031
+157
+another-adj-matrices?
+another-adj-matrices?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
