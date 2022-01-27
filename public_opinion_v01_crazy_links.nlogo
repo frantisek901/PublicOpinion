@@ -72,9 +72,10 @@ directed-link-breed [friends friend]
 
 
 to setup
-
+  ; Clearing all world
   clear-all
 
+  ; Seting random seed for value RS, if we want!
   if random-seed? [random-seed RS]
 
   ;1. Get global variables or setup variables from interface.
@@ -160,7 +161,7 @@ to setup
     [ set color lput transparency extract-rgb color ]
   ]
 
-  set num-interactions 2
+  set num-interactions 2  ; This controls the number of interactions of every agent in each tick
   reset-ticks
 
 end
@@ -223,19 +224,19 @@ to create-adj-matrices
             let tie_strength [weight] of (family-member i j)          ; get the weight of the tie
             matrix:set family-ties-m i j tie_strength                 ; update relevant cell in family-ties-m with weight
           ]
-         nw:set-context turtles coworkers
-          ask turtle i [
+        ]
+        nw:set-context turtles coworkers
+        ask turtle i [
           if out-coworker-neighbor? turtle j = true   [               ; if i and j are coworkers
             let tie_strength [weight] of (coworker i j)               ; ... ... ...
             matrix:set coworker-ties-m i j tie_strength
-            ]
           ]
-          nw:set-context turtles friends
-          ask turtle i [
-            if out-friend-neighbor? turtle j = true   [               ; finally, if i and j are friends
+        ]
+        nw:set-context turtles friends
+        ask turtle i [
+          if out-friend-neighbor? turtle j = true   [               ; finally, if i and j are friends
             let tie_strength [weight] of (friend i j)
             matrix:set friend-ties-m i j tie_strength
-            ]
           ]
         ]
       ]
@@ -662,7 +663,7 @@ number-of-agents
 number-of-agents
 20
 100
-100.0
+45.0
 1
 1
 NIL
@@ -694,7 +695,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-30.0
+20.0
 1
 1
 NIL
@@ -709,7 +710,7 @@ transparency
 transparency
 0
 255
-60.0
+45.0
 1
 1
 NIL
@@ -790,13 +791,13 @@ CHOOSER
 opinion-distribution
 opinion-distribution
 "uniform" "normal"
-1
+0
 
 CHOOSER
-22
-193
-192
-238
+10
+401
+180
+446
 network-groups-sizes
 network-groups-sizes
 "fam4 work20 friend10" "size drawn from dists" "random"
@@ -858,7 +859,7 @@ SWITCH
 62
 random-seed?
 random-seed?
-0
+1
 1
 -1000
 
@@ -871,6 +872,24 @@ Controlling the value of random seed
 11
 0.0
 1
+
+PLOT
+1147
+186
+1347
+336
+Weight of  liinks
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean [weight] of links"
 
 @#$#@#$#@
 ## WHAT IS IT?
