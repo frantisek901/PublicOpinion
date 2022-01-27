@@ -6,6 +6,7 @@ Also a quick opinion about how the networks and communities are generated: there
 In terms of individuals' memory, some evidence from economics suggest that (households' memory of past hyperinflation episodes) can go as far back as 10 to 15 years (Ehrmann & Tzamourani, 2012). Just my 2 cents
 
 @Elle, I'd say not in particular their opinion but more like the event itself (and its severity) which shapes their opinion up to 15 year ahead in the future. In a related topic, some experimental economics studies (Anufriev & Hommes, 2012; in fact 2 papers from those authors in that year) do suggest a persistent, albeit decaying memory (again in a financial decision framework)
+@ Elle: (more precisely, exponentially decaying memory in time) :-)
 
 
 Have you also considered the rule where if you meet someone outside your range of tolerance that will push you further away from their opinion? I sense this kind of thing happens.
