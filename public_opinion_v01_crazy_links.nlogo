@@ -352,6 +352,10 @@ to go
     create-adj-matrices ; see function to create the adj matrices below
   ]
 
+  if another-adj-matrices? [
+    rewrite-adj-matrices
+  ]
+
   ;5. Check if ties matrices have changed, if not maybe we can stop.
   ; This is not necessary if we're only running the model for a limited number of ticks in behavior space.
 
@@ -904,7 +908,7 @@ SWITCH
 62
 random-seed?
 random-seed?
-1
+0
 1
 -1000
 
