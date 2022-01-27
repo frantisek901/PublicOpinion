@@ -218,6 +218,11 @@ to rewrite-adj-matrices
   ;show friend-ties-m
   ;show coworker-ties-m
 
+  ; We need to erase matrix every tick...
+  set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
+  set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
+  set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
+
   nw:set-context turtles family
   ask turtles [
     ; Creates list of 'who' of targets of out-links
