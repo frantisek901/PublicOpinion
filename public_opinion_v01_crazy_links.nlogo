@@ -145,7 +145,7 @@ to setup
   ]
 
   if another-adj-matrices? [
-    crt-adj-matrices
+    rewrite-adj-matrices
   ]
 
 
@@ -255,7 +255,7 @@ to create-adj-matrices
 
 end
 
-to crt-adj-matrices
+to rewrite-adj-matrices
   ;show family-ties-m
   ;show friend-ties-m
   ;show coworker-ties-m
