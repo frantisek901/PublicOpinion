@@ -214,7 +214,11 @@ end
 
 
 to rewrite-adj-matrices
-; We need to erase matrix every tick...
+  ;show family-ties-m
+  ;show friend-ties-m
+  ;show coworker-ties-m
+
+  ; We need to erase matrix every tick...
   set family-ties-m matrix:make-constant number-of-agents number-of-agents 0         ; empty num-agent * num-agent adjacency matrix to store family ties
   set coworker-ties-m matrix:make-constant number-of-agents number-of-agents 0
   set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
@@ -249,9 +253,9 @@ to rewrite-adj-matrices
     ;show job-neis
   ]
 
-;  show family-ties-m
-;  show friend-ties-m
-;  show coworker-ties-m
+  ;show family-ties-m
+  ;show friend-ties-m
+  ;show coworker-ties-m
 end
 
 
@@ -663,7 +667,6 @@ end
     ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
     ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -718,7 +721,7 @@ number-of-agents
 number-of-agents
 20
 100
-20.0
+100.0
 1
 1
 NIL
@@ -750,7 +753,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-15.0
+12.0
 1
 1
 NIL
@@ -765,7 +768,7 @@ transparency
 transparency
 0
 255
-45.0
+90.0
 1
 1
 NIL
@@ -835,7 +838,7 @@ CHOOSER
 opinion-distribution
 opinion-distribution
 "uniform" "normal"
-1
+0
 
 CHOOSER
 10
@@ -1313,22 +1316,38 @@ NetLogo 6.2.2
   <experiment name="output_test_3-ties-adj-matrices-and-opinions" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="30"/>
+    <timeLimit steps="50"/>
     <metric>matrix:to-row-list family-ties-m</metric>
     <metric>matrix:to-row-list coworker-ties-m</metric>
     <metric>matrix:to-row-list friend-ties-m</metric>
     <metric>(list [(word "turtle:" who " " opinion)] of turtles )</metric>
     <enumeratedValueSet variable="number-of-agents">
-      <value value="20"/>
+      <value value="100"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="agent-tolerance">
-      <value value="15"/>
+      <value value="12"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="opinion-distribution">
+      <value value="&quot;uniform&quot;"/>
+      <value value="&quot;normal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="decision_rule">
+      <value value="&quot;weighdiff_sigweight&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-seed?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="RS">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="another-adj-matrices?">
+      <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="transparency">
       <value value="90"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="make-adj-matrices?">
-      <value value="true"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
