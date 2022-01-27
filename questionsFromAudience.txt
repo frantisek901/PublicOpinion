@@ -1,0 +1,14 @@
+Q: (sorry I can't use audio right now) Can you add exceptions to the sigmoid rule? E.g. there are people who are completely different in opinions, and yet remain friends and "agree to disagree". Can you base that instead on past friendship?
+Also a quick opinion about how the networks and communities are generated: there's a lot of work on this, e.g. Yang and Leskovec, etc. I'm sure many of you know these already but I can provide some references if interested. 
+
+@Ryan this is one reference which I've used before, but it might be a bit simplified compared to other networks that can be initiated. But they have python code: http://snap.stanford.edu/snappy/index.html
+
+In terms of individuals' memory, some evidence from economics suggest that (households' memory of past hyperinflation episodes) can go as far back as 10 to 15 years (Ehrmann & Tzamourani, 2012). Just my 2 cents
+
+Have you also considered the rule where if you meet someone outside your range of tolerance that will push you further away from their opinion? I sense this kind of thing happens.
+
+Homophily seems given so much power in belief structures and opinions; perhaps too much. More attention to diversity of agent characteristics and characterization of groups themselves and some thermometer of collective tolerance.  Just some thoughts.
+
+
+
+
