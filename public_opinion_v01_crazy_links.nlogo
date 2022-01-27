@@ -422,10 +422,28 @@ to apply-decision-rule-to-interactions
           ]
         ] [
           ask myself [                    ; when i thinks j is extreme,
-            set weight 0                  ; they cut the i -> j tie  by setting the weight = 0
+            ;set weight 0                  ; they cut the i -> j tie  by setting the weight = 0
             die                           ; AND asking the link to die
           ]
-          ; next step is to get agent i to make another tie here (I need to sleep, so not now)
+          ; next step is to get agent i to make another tie here (I need to sleep, so not very well now)
+          ask turtle i [
+            ; Let's do it just super-brutal-random for now -- we might polish it when the dust settles down...
+            ; Idea is:
+            ; 1. Randomly select another agent
+            ; 2. Randomly select which type of link create
+            ; 3. carefully try to establish the link of chosen type to chosen agent
+            ; 4. In case the link exists, the new link is not created
+            let her one-of other turtles  ; Because of ifelse cycle we need to store the agent
+            let rnn random 3  ; For the same reason we store the random number
+            (ifelse
+              rnn = 0 [carefully [create-family-member-to her] [print "Link has already existed! Nothing is created"]
+              ]
+              rnn = 1 [carefully [create-friend-to her] [print "Link has already existed! Nothing is created"]
+              ]
+              [
+                carefully [create-coworker-to her] [print "Link has already existed! Nothing is created"]
+            ])
+          ]
         ]
       ]
     ]
@@ -666,7 +684,6 @@ end
     ;; !!!FrK: No we ask constantly for 2 interactions, so turtles with 0 or 1 link only are real problem now.
     ;; !!!FrK: But you wisely changed code that each agent has at least 3 links and we ask just for 2, so we are safe now and
     ;; !!!FrK: in the future we find a way how to get around this problem/bug/feature.
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -753,7 +770,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-12.0
+24.0
 1
 1
 NIL
@@ -921,10 +938,10 @@ Controlling the value of random seed
 1
 
 PLOT
-1147
-186
-1347
-336
+1134
+108
+1334
+258
 Weight of  liinks
 NIL
 NIL
@@ -965,6 +982,27 @@ NIL
 NIL
 NIL
 1
+
+PLOT
+1127
+268
+1421
+418
+Numbers of links
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"total" 1.0 0 -16777216 true "" "plot count links"
+"family" 1.0 0 -955883 true "" "plot count family"
+"friends" 1.0 0 -14730904 true "" "plot count friends"
+"coworkers" 1.0 0 -2674135 true "" "plot count coworkers"
 
 @#$#@#$#@
 ## WHAT IS IT?
