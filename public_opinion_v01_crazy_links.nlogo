@@ -1,4 +1,4 @@
-extensions [ palette csv nw matrix]
+extensions [ palette csv nw matrix profiler ]
 
 ; Bad news: The NW extension is not particularly useful for us. "At the moment, nw:save-matrix does not support link weights.
 ; Every link is represented as a "1.00" in the connection matrix. This will change in a future version of the extension."
@@ -267,7 +267,7 @@ to crt-adj-matrices
     let i who
     ; writing weights into the matrices
     foreach fam-neis [j -> matrix:set family-ties-m i j [weight] of family-member i j]
-    show fam-neis
+    ;show fam-neis
   ]
 
   nw:set-context turtles friends
@@ -277,7 +277,7 @@ to crt-adj-matrices
     let i who
     ; writing weights into the matrices
     foreach frn-neis [j -> matrix:set friend-ties-m i j [weight] of friend i j]
-    show frn-neis
+    ;show frn-neis
   ]
 
   nw:set-context turtles coworkers
@@ -287,7 +287,7 @@ to crt-adj-matrices
     let i who
     ; writing weights into the matrices
     foreach job-neis [j -> matrix:set coworker-ties-m i j [weight] of coworker i j]
-    show job-neis
+    ;show job-neis
   ]
 
   ;show family-ties-m
@@ -708,7 +708,7 @@ number-of-agents
 number-of-agents
 20
 100
-45.0
+100.0
 1
 1
 NIL
@@ -946,6 +946,23 @@ another-adj-matrices?
 0
 1
 -1000
+
+BUTTON
+1370
+189
+1436
+222
+profile
+profiler:start         ;; start profiling\nsetup                  ;; run something you want to measure\nprofiler:stop          ;; stop profiling\nprint profiler:report  ;; view the results\nprofiler:reset         ;; clear the data
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
