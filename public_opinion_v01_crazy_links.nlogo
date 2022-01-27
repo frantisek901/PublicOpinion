@@ -140,10 +140,6 @@ to setup
   set friend-ties-m matrix:make-constant number-of-agents number-of-agents 0
 
   ;4.2. matrices are filled with information from the links
-  if make-adj-matrices?  [
-    create-adj-matrices ; see function to create the adj matrices below
-  ]
-
   if another-adj-matrices? [
     rewrite-adj-matrices
   ]
@@ -216,44 +212,6 @@ to generate_clustered_networks               ; this is a dumb first pass at gene
   ]
 end
 
-to create-adj-matrices
-  let list_turtles range number-of-agents ; create an ordered list of turtles to loop through
-  foreach list_turtles [
-    i ->
-    foreach list_turtles [
-      j ->
-      if i != j [                                               ; avoid error when turtles try to evaluate self
-        nw:set-context turtles family
-        ask turtle i [
-          if out-family-member-neighbor? turtle j = true   [          ; if i and j are family
-            let tie_strength [weight] of (family-member i j)          ; get the weight of the tie
-            matrix:set family-ties-m i j tie_strength                 ; update relevant cell in family-ties-m with weight
-          ]
-        ]
-        nw:set-context turtles coworkers
-        ask turtle i [
-          if out-coworker-neighbor? turtle j = true   [               ; if i and j are coworkers
-            let tie_strength [weight] of (coworker i j)               ; ... ... ...
-            matrix:set coworker-ties-m i j tie_strength
-          ]
-        ]
-        nw:set-context turtles friends
-        ask turtle i [
-          if out-friend-neighbor? turtle j = true   [               ; finally, if i and j are friends
-            let tie_strength [weight] of (friend i j)
-            matrix:set friend-ties-m i j tie_strength
-          ]
-        ]
-      ]
-    ]
-  ]
-  ; uncomment to confirm this ^ works
-   ;print matrix:pretty-print-text family-ties-m
-   ;print matrix:pretty-print-text coworker-ties-m
-   ;print matrix:pretty-print-text friend-ties-m
-   ;print family-ties-m
-
-end
 
 to rewrite-adj-matrices
   ;show family-ties-m
@@ -347,11 +305,6 @@ to go
   ]
 
   ;4. Output new ties matrix for writing to table/file, polarization stats.
-
-  if make-adj-matrices?  [
-    create-adj-matrices ; see function to create the adj matrices below
-  ]
-
   if another-adj-matrices? [
     rewrite-adj-matrices
   ]
@@ -502,6 +455,58 @@ end
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Unused procedure for updating networks
+
+
+;  if make-adj-matrices?  [
+;    create-adj-matrices ; see function to create the adj matrices below
+;  ]
+;
+;  if make-adj-matrices?  [
+;    create-adj-matrices ; see function to create the adj matrices below
+;  ]
+
+
+;to create-adj-matrices
+;  let list_turtles range number-of-agents ; create an ordered list of turtles to loop through
+;  foreach list_turtles [
+;    i ->
+;    foreach list_turtles [
+;      j ->
+;      if i != j [                                               ; avoid error when turtles try to evaluate self
+;        nw:set-context turtles family
+;        ask turtle i [
+;          if out-family-member-neighbor? turtle j = true   [          ; if i and j are family
+;            let tie_strength [weight] of (family-member i j)          ; get the weight of the tie
+;            matrix:set family-ties-m i j tie_strength                 ; update relevant cell in family-ties-m with weight
+;          ]
+;        ]
+;        nw:set-context turtles coworkers
+;        ask turtle i [
+;          if out-coworker-neighbor? turtle j = true   [               ; if i and j are coworkers
+;            let tie_strength [weight] of (coworker i j)               ; ... ... ...
+;            matrix:set coworker-ties-m i j tie_strength
+;          ]
+;        ]
+;        nw:set-context turtles friends
+;        ask turtle i [
+;          if out-friend-neighbor? turtle j = true   [               ; finally, if i and j are friends
+;            let tie_strength [weight] of (friend i j)
+;            matrix:set friend-ties-m i j tie_strength
+;          ]
+;        ]
+;      ]
+;    ]
+;  ]
+;  ; uncomment to confirm this ^ works
+;   ;print matrix:pretty-print-text family-ties-m
+;   ;print matrix:pretty-print-text coworker-ties-m
+;   ;print matrix:pretty-print-text friend-ties-m
+;   ;print family-ties-m
+;
+;end
+
 
 ;; Unused procedure for network generation
 
@@ -744,7 +749,7 @@ agent-tolerance
 agent-tolerance
 0
 100
-20.0
+15.0
 1
 1
 NIL
@@ -821,17 +826,6 @@ NIL
 NIL
 1
 
-SWITCH
-658
-115
-821
-148
-make-adj-matrices?
-make-adj-matrices?
-1
-1
--1000
-
 CHOOSER
 21
 144
@@ -840,7 +834,7 @@ CHOOSER
 opinion-distribution
 opinion-distribution
 "uniform" "normal"
-0
+1
 
 CHOOSER
 10
