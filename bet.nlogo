@@ -1285,8 +1285,8 @@ SLIDER
 tolerance-level
 tolerance-level
 0
-1
-0.8
+1.1
+1.1
 0.01
 1
 NIL
@@ -1329,7 +1329,7 @@ conformity-level
 conformity-level
 0
 1
-0.2
+1.0
 0.01
 1
 NIL
