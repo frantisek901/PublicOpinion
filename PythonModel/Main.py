@@ -3,10 +3,10 @@
     dynamic network structure and dynamic opinion.
 -------------------------------------------------------------------------------
 created on:
-    Sun 16 Jan 2022
+    Thu 4 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Wed 26 Jan 2022
+    Fri 5 Mar 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -33,9 +33,9 @@ def simulate():
     record = TimeSeries.Record()
     # Extract agents and groups
     agents = population.agents
-    groups = population.groups
+    network = population.network
     # Run simulation
-    Generator.run_simulation(agents, groups, record)
+    Generator.run_simulation(agents, network, record)
     # Write output
     record.write_output()
     print('Simulation complete')
