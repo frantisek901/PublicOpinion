@@ -5,7 +5,7 @@ created on:
     Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Sat 6 Mar 2022
+    Thu 17 Mar 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -28,22 +28,10 @@ p_main_gang = .8
 
 # Opinion distribution parameters
 sigma = 2
+op_low = 0.
+op_high = 1.
 
-# Payoff parameters
-eps = 0.025
-beta = 0.1
-
-def f(x):
-    '''
-    This is the fitness function.
-    '''
-    return 1
-
-# num-agent
-# num-interactions
-# family-ties-m
-# coworker-ties-m
-# friend-ties-m
-# interactions-family-m
-# interactions-coworkers-m
-# interactions-friends-m
+# Updating parameters
+layer_prob = [1/3, 1/3, 1/3]
+tol_low = -0.1
+tol_high = 0.1

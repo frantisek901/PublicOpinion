@@ -6,7 +6,7 @@ created on:
     Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Sat 6 Mar 2022
+    Thu 17 Mar 2022
 -------------------------------------------------------------------------------s
 notes:
 -------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ def simulate():
     groups = population.groups
     network = population.network
     # Run simulation
-    Generator.run_simulation(agents, groups, network, record)
+    Generator.run_simulation(agents, network, record)
     # Write output
     record.write_output()
     print('Simulation complete')

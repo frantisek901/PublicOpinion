@@ -5,7 +5,7 @@ created on:
     Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Sat 6 Mar 2022
+    Thu 17 Mar 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -29,27 +29,22 @@ class Simulation(object):
         '''
         This function advances the simulation one time step.
         '''
-        # Update membership record
-        record.get_membership(agents)
-        # Update group payoffs
-        for group in network:
-            group.update_payoffs()
+        # Update statistics
+        record.get_stats(agents, network)
         # Agent's decisions
         for agent in agents:
-            # Update probing status
-            agent.update_probe()
-            agent.update_payoff()
-            # Agents decide whether to move out of a group
-            agent.choose_isolate()
-            # Agents go into the probing stage
-            agent.check_probe()
-            if agent.probe_curr:
-                if agent.group != None:
-                    agent.group.members.remove(agent)
-                new_group = np.random.choice(network)
-                agent.group = new_group
-                new_group.members.append(agent)
-            # Previously probing agents decide whether to go back
-            agent.probe_return()
+            for l in range(Params.N_layers):
+                for friend in agent.groups[l].members:
+                    if friend.ident != agent.ident:
+                        # Get weight of interaction
+                        w = network.adj_matrix[l][agent.ident, friend.ident]
+                        # Get difference of opinions
+                        dist = friend.opinion - agent.opinion
+                        if (dist < Params.tol_high) and (dist > Params.tol_low):
+                            agent.opinion += w*dist
+            if agent.opinion < Params.op_low:
+                agent.opinion = Params.op_low
+            elif agent.opinion > Params.op_high:
+                agent.opinion = Params.op_high
         # Update time
         self.time += 1

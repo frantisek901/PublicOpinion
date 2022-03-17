@@ -5,7 +5,7 @@ created on:
     Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Sat 6 Mar 2022
+    Thu 17 Mar 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -22,27 +22,20 @@ class Record(object):
         '''
         This function initializes the record.
         '''
-        self.attributes = []
-        self.membership = []
+        self.mean = []
+        self.std = []
         
-    def get_attributes(self, agents):
+    def get_stats(self, agents, network):
         '''
         This function extracts the attributes from a set of agents.
         '''
-        for agent in agents:
-            self.attributes.append([agent.x, agent.y, agent.z])
-    
-    def get_membership(self, agents):
-        '''
-        This function extracts the groups to which a set of agents belongs.
-        '''
-        group_list = [(agent.group.ident if agent.group!=None else -1) for agent in agents]
-        self.membership.append(group_list)
-        
+        opinions = [agent.opinion for agent in agents]
+        self.mean.append(np.mean(opinions))
+        self.std.append(np.std(opinions))
     
     def write_output(self):
         '''
         This function outputs the information stored in the record.
         '''
-        np.save('Output/Attributes', np.array(self.attributes))
-        np.save('Output/Membership', np.array(self.membership))
+        np.savetxt('../Output/Mean.txt', self.mean, delimiter=',')
+        np.savetxt('../Output/Std.txt', self.std, delimiter=',')

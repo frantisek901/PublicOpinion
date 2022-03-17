@@ -5,7 +5,7 @@ created on:
     Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Sat 6 Mar 2022
+    Thu 17 Mar 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -75,7 +75,6 @@ class Population(object):
             for group in groups[l]:
                 for agent_i in group.members:
                     for agent_j in group.members:
-                        if agent_i.ident < agent_j.ident:
                             # Family ties
                             if l == 0:
                                 layer_net[agent_i.ident, agent_j.ident] = Params.init_weight[l]
@@ -91,10 +90,9 @@ class Population(object):
                                 elif agent_i.ident < agent_j.ident:
                                     others = [k for k in agents if k.groups[l]!=group]
                                     new_friend = np.random.choice(others)
-                                    min_ind, max_ind = np.sort([agent_i.ident, new_friend.ident])
-                                    layer_net[min_ind, max_ind] = Params.init_weight[l]
-            layer_net += layer_net.T
+                                    layer_net[agent_i.ident, new_friend.ident] = Params.init_weight[l]
             networks.append(layer_net)
+       # Generate network object
         network = Network.Network(np.array(networks))
         self.network = network
 
@@ -106,6 +104,6 @@ def run_simulation(agents, network, record):
     This function runs the simulation with the initialized agents.
     '''
     my_simulation = TimeIteration.Simulation()
-    record.get_attributes(agents)
+    record.get_stats(agents, network)
     while my_simulation.time < Params.T:
         my_simulation.iterate(agents, network, record)
