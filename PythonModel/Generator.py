@@ -67,7 +67,7 @@ class Population(object):
             for l in range(Nl):
                 Ng = int(Na/Params.avg_members[l])
                 g = np.random.choice(np.arange(Ng))
-                agent.groups = groups[l][g]
+                agent.groups.append(groups[l][g])
                 groups[l][g].members.append(agent)
         networks = []
         for l in range(Nl):
@@ -95,7 +95,7 @@ class Population(object):
                                     layer_net[min_ind, max_ind] = Params.init_weight[l]
             layer_net += layer_net.T
             networks.append(layer_net)
-        network = Network.Network(networks)
+        network = Network.Network(np.array(networks))
         self.network = network
 
 #------------------------------------------------------------------------------
