@@ -18,14 +18,19 @@ contributors:
 import Params
 import numpy as np
 
-class Network(object):
-    def __init__(self, adj_matrix):
+class Group(object):
+    def __init__(self, layer, ident):
         '''
         This function initializes the group.
         '''
-        self.adj_matrix = adj_matrix
+        self.layer = layer
+        self.ident = ident
+        self.members = []
+        self.span = 0
+        self.payoff = 0
+        self.avg_int = 0.5
     
-    def update_links(self):
+    def update_span(self):
         '''
         This function calculates the y-union span of the group.
         '''

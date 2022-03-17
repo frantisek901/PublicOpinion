@@ -2,10 +2,10 @@
     This script has the information for the Agent class.
 -------------------------------------------------------------------------------
 created on:
-    Thu 4 Mar 2022
+    Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Fri 5 Mar 2022
+    Sat 6 Mar 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -19,22 +19,13 @@ import Params
 import numpy as np
 
 class Agent(object):
-    def __init__(self, ident, x, y, z):
+    def __init__(self, ident, opinion):
         '''
         This function initializes the agent.
         '''
         self.ident = ident
-        self.x = x
-        self.y = y
-        self.z = z
-        self.group = None
-        self.payoff = 0
-        self.lone_payoff = Params.f(x)*(min(y+Params.eps,1)-max(y-Params.eps,0))*z
-        self.probe_prev = False
-        self.probe_curr = False
-        self.isolate = False
-        self.prev_group = None
-        self.prev_payoff = 0
+        self.opinion = opinion
+        self.groups = None
     
     def update_probe(self):
         '''

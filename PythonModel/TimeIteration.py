@@ -2,10 +2,10 @@
     This script has the information for the time iteration of the model.
 -------------------------------------------------------------------------------
 created on:
-    Thu 4 Mar 2022
+    Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Fri 5 Mar 2022
+    Sat 6 Mar 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -25,14 +25,14 @@ class Simulation(object):
         '''
         self.time = 0
     
-    def iterate(self, agents, groups, record):
+    def iterate(self, agents, network, record):
         '''
         This function advances the simulation one time step.
         '''
         # Update membership record
         record.get_membership(agents)
         # Update group payoffs
-        for group in groups:
+        for group in network:
             group.update_payoffs()
         # Agent's decisions
         for agent in agents:
@@ -46,7 +46,7 @@ class Simulation(object):
             if agent.probe_curr:
                 if agent.group != None:
                     agent.group.members.remove(agent)
-                new_group = np.random.choice(groups)
+                new_group = np.random.choice(network)
                 agent.group = new_group
                 new_group.members.append(agent)
             # Previously probing agents decide whether to go back
