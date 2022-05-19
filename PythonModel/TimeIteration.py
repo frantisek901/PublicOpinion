@@ -34,12 +34,12 @@ class Simulation(object):
         '''
         self.time = 0
     
-    def iterate(self, agents, network, record):
+    def iterate(self, ind, agents, network, record):
         '''
         This function advances the simulation one time step.
         '''
         # Update statistics
-        record.get_stats(agents, network)
+        record.get_stats(ind, self.time, agents, network)
         # Update weight matrix
         for agent in agents:
             for l in range(Params.N_layers):
@@ -62,7 +62,7 @@ class Simulation(object):
                         w = network.adj_matrix[l][agent.ident, friend.ident]
                         # Get difference of opinions and update
                         dist = friend.opinion - agent.opinion
-                        agent.opinion += w*dist
+                        agent.opinion += Params.gamma*w*dist
             if agent.opinion < Params.op_low:
                 agent.opinion = Params.op_low
             elif agent.opinion > Params.op_high:

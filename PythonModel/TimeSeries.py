@@ -5,7 +5,7 @@ created on:
     Thu 3 Mar 2022
 -------------------------------------------------------------------------------
 last change:
-    Thu 17 Mar 2022
+    Thu 19 May 2022
 -------------------------------------------------------------------------------
 notes:
 -------------------------------------------------------------------------------
@@ -16,26 +16,31 @@ contributors:
 -------------------------------------------------------------------------------
 """
 import numpy as np
+import pandas as pd
 
 class Record(object):
     def __init__(self):
         '''
         This function initializes the record.
         '''
-        self.mean = []
-        self.std = []
+        self.stats = []
         
-    def get_stats(self, agents, network):
+    def get_stats(self, ind, t, agents, network):
         '''
         This function extracts the attributes from a set of agents.
         '''
         opinions = [agent.opinion for agent in agents]
-        self.mean.append(np.mean(opinions))
-        self.std.append(np.std(opinions))
+        output = [ind,
+                  t,
+                  np.mean(opinions),
+                  np.std(opinions)]
+        self.stats.append(output)
     
     def write_output(self):
         '''
         This function outputs the information stored in the record.
         '''
-        np.savetxt('../Output/Mean.txt', self.mean, delimiter=',')
-        np.savetxt('../Output/Std.txt', self.std, delimiter=',')
+        df_out = pd.DataFrame(np.array(self.stats), 
+                              columns=['iter', 't', 'mean_op', 'std_op'])
+        df_out[['iter', 't']] = df_out[['iter', 't']].astype(int)
+        df_out.to_parquet('../Output/Stats.parquet')

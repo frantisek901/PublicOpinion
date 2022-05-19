@@ -38,3 +38,6 @@ tol_high = 0.1
 d0 = 0.1
 tau = 0.1
 gamma = 1/N_agents
+
+# Multiple simulation parameters
+N_sim = int(1e3)

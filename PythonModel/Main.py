@@ -16,27 +16,38 @@ contributors:
         email:      jose.betancourtvalencia@yale.edu
 -------------------------------------------------------------------------------
 """
+import Params
 import Generator
 import TimeSeries
 
 #------------------------------------------------------------------------------
 # SIMULATION
 #------------------------------------------------------------------------------
-def simulate():
+def sim_single(ind, record):
     '''
-    This function initializes and runs the simulation.
+    This function initializes and runs an instance of the simulation.
+    
     '''
     # Initialize agents
     population = Generator.Population()
-    print('Initialization complete')
-    # Initialize timeSeries object
-    record = TimeSeries.Record()
     # Extract agents and groups
     agents = population.agents
     groups = population.groups
     network = population.network
     # Run simulation
-    Generator.run_simulation(agents, network, record)
+    Generator.run_simulation(ind, agents, network, record)
+
+def sim_multiple():
+    '''
+    This function runs multiple instances of the simulation.
+
+    '''
+    # Initialize record
+    record = TimeSeries.Record()
+    # Run simulations
+    for i in range(Params.N_sim):
+        sim_single(i, record)
+        if i%100 == 0:
+            print('Simulation ', i, ' done.')
     # Write output
     record.write_output()
-    print('Simulation complete')
