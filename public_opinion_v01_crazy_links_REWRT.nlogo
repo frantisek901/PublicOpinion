@@ -428,10 +428,11 @@ to apply-decision-rule-to-interactions
         let diff  abs (her-opinion - opinion)
         ; as long as i thinks j's opinion is not too extreme (i.e., it's < 2* their tolerance level)
         ; when i thinks j is extreme,they cut the i -> j tie  by asking the link to die
-        ifelse diff < 2 * tolerance  [ask the-link [set weight sigmoid (diff / 100)]] [ask the-link [die]]
+        ;ifelse diff < 2 * tolerance  [ask the-link [set weight sigmoid (diff / 100)]] [ask the-link [die]]
 
         ; next step is to get agent i to make another tie here (I need to sleep, so not now)
         ; FrK: Meee tooo :-)
+        ifelse diff < 2 * tolerance  [ask the-link [set weight sigmoid (diff / 100)]] [ask the-link [ set weight 0 ]]
 
 
       ]
@@ -463,7 +464,6 @@ to-report random-normal-in-bounds [mid dev mmin mmax]
 end
 ;observer> clear-plot set-plot-pen-interval 0.01 set-plot-x-range -0.1 1.1
 ;observer> histogram n-values 1000000 [ random-normal-in-bounds 0.5 0.2 0 1 ]
-
 
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -519,7 +519,7 @@ number-of-agents
 number-of-agents
 20
 100
-20.0
+100.0
 1
 1
 NIL
@@ -636,7 +636,7 @@ CHOOSER
 opinion-distribution
 opinion-distribution
 "uniform" "normal"
-1
+0
 
 CHOOSER
 10
