@@ -35,3 +35,6 @@ op_high = 1.
 layer_prob = [1/3, 1/3, 1/3]
 tol_low = -0.1
 tol_high = 0.1
+d0 = 0.1
+tau = 0.1
+gamma = 1/N_agents
