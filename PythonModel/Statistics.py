@@ -52,3 +52,7 @@ def spectral_index(opinions, network):
 
     '''
     return 0
+
+# LINK AGE
+# AVERAGE DEGREE
+# AVERAGE TIE STRENGTH
