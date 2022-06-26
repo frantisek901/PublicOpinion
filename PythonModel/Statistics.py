@@ -53,6 +53,68 @@ def spectral_index(opinions, network):
     '''
     return 0
 
+def avg_degree(network):
+    '''
+    Calculates the average number of connections individuals have in the 
+    network.
+
+    Parameters
+    ----------
+    network : array[float, float]
+        Tie strength of individuals in the network.
+
+    Returns
+    -------
+    avg_deg : float
+        Average degree of hte network.
+
+    '''
+    # Obtain the unweighted network
+    network = (network!=0)+0
+    # Calculate average degree
+    avg_deg = np.mean(np.sum(network, axis=1))
+    return avg_deg
+
+
+def avg_srength(network):
+    '''
+    Calculates the average tie strength of active ties in the network.
+
+    Parameters
+    ----------
+    network : array[float, float]
+        Tie strength of individuals in the network.
+
+    Returns
+    -------
+    avg_strength : float
+        Average degree of hte network.
+
+    '''
+    # Obtain the unweighted network and total active links
+    uwt_network = (network!=0)+0
+    n_links = np.sum(uwt_network)
+    # Calculate average tie strength
+    avg_strength = np.sum(network)/n_links
+    return avg_strength
+
 # LINK AGE
-# AVERAGE DEGREE
-# AVERAGE TIE STRENGTH
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
